@@ -605,7 +605,7 @@ body.page-projects .nav-indicator { left: 50%; }
     left: calc(50% + 400px + var(--space-xl));
     top: var(--space-lg);
     bottom: var(--space-md);
-    width: 200px;
+    width: 250px;
     overflow: hidden;
 }
 
