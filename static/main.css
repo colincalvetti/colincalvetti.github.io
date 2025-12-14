@@ -627,8 +627,60 @@ body.page-projects .nav-indicator { left: 50%; }
     color: var(--color-text-primary);
 }
 
+/* Inline Date (shown on mobile only) */
+.project-date-inline {
+    display: none;
+    margin-top: var(--space-sm);
+    font-size: var(--font-size-sm);
+    color: var(--color-text-muted);
+}
+
 /* =============================================================================
-   8. UNAVAILABLE PAGE
+   8. UNAVAILABLE BANNER
+   ============================================================================= */
+
+/* Unavailable Banner */
+.unavailable-banner {
+    position: fixed;
+    top: calc(var(--nav-height) + var(--space-md));
+    right: var(--space-lg);
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    padding: var(--space-sm) var(--space-md);
+    background: rgba(245, 158, 11, 0.15);
+    border: 1px solid rgba(245, 158, 11, 0.4);
+    border-radius: var(--radius-md);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    z-index: var(--z-sticky);
+    opacity: 0;
+    transform: translateX(20px);
+    pointer-events: none;
+    transition: 
+        opacity var(--transition-base),
+        transform var(--transition-base);
+}
+
+.unavailable-banner.show {
+    opacity: 1;
+    transform: translateX(0);
+    pointer-events: auto;
+}
+
+.unavailable-banner .banner-icon {
+    font-size: var(--font-size-lg);
+    color: #f59e0b;
+}
+
+.unavailable-banner .banner-text {
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-medium);
+    color: #fbbf24;
+}
+
+/* =============================================================================
+   9. UNAVAILABLE / 404 PAGE
    ============================================================================= */
 .unavailable-page {
     flex: 1;
@@ -668,7 +720,7 @@ body.page-projects .nav-indicator { left: 50%; }
 }
 
 /* =============================================================================
-   9. RESPONSIVE DESIGN
+   10. RESPONSIVE DESIGN
    ============================================================================= */
 
 /* Tablet and below */
@@ -720,9 +772,13 @@ body.page-projects .nav-indicator { left: 50%; }
         max-height: 50vh;
     }
     
-    /* Hide dates column on tablet */
+    /* Hide dates column on tablet, show inline dates instead */
     .dates-column {
         display: none;
+    }
+    
+    .project-date-inline {
+        display: block;
     }
     
     .projects-center {
@@ -761,6 +817,10 @@ body.page-projects .nav-indicator { left: 50%; }
     
     .project-title {
         font-size: var(--font-size-base);
+    }
+    
+    .unavailable-banner {
+        right: var(--space-md);
     }
 }
 
@@ -824,10 +884,14 @@ body.page-projects .nav-indicator { left: 50%; }
     .project-card-home {
         padding: var(--space-sm) var(--space-md);
     }
+    
+    .unavailable-banner {
+        right: var(--space-sm);
+    }
 }
 
 /* =============================================================================
-   10. PRINT STYLES
+   11. PRINT STYLES
    ============================================================================= */
 @media print {
     .site-header,

@@ -15,7 +15,8 @@ const CONFIG = {
         navIndicator: '.nav-indicator',
         projectsHome: '#projects-home',
         projectsPage: '#projects-page',
-        datesColumn: '#dates-column'
+        datesColumn: '#dates-column',
+        unavailableBanner: '#unavailable-banner'
     },
     classes: {
         pageHome: 'page-home',
@@ -211,15 +212,21 @@ const Projects = {
     },
 
     createCard(project, isHome, index = 0) {
+        const hasLink = project.link !== null && project.link !== '';
         const card = document.createElement('a');
-        card.href = project.link;
         card.className = isHome ? 'project-card project-card-home' : 'project-card';
         card.dataset.index = index;
 
-        const isUnavailable = project.link.includes('/unavailable');
-        if (!isUnavailable) {
+        if (hasLink) {
+            card.href = project.link;
             card.target = '_blank';
             card.rel = 'noopener noreferrer';
+        } else {
+            card.href = '#';
+            card.addEventListener('click', (e) => {
+                e.preventDefault();
+                this.showUnavailableBanner();
+            });
         }
 
         if (isHome) {
@@ -244,11 +251,45 @@ const Projects = {
                 <div class="project-description">
                     ${descriptionHTML}
                 </div>
+                <div class="project-date-inline">${this.escapeHtml(project.date)}</div>
             `;
         }
 
         return card;
     },
+
+    showUnavailableBanner() {
+        let banner = $(CONFIG.selectors.unavailableBanner);
+        
+        if (!banner) {
+            banner = document.createElement('div');
+            banner.id = 'unavailable-banner';
+            banner.className = 'unavailable-banner';
+            banner.innerHTML = `
+                <span class="banner-icon" aria-hidden="true">&#9888</span>
+                <span class="banner-text">Link Unavailable</span>
+            `;
+            document.body.appendChild(banner);
+        }
+
+        // Hide banner first, then show after a brief delay
+        banner.classList.remove('show');
+        
+        clearTimeout(this.bannerShowTimeout);
+        clearTimeout(this.bannerHideTimeout);
+        
+        this.bannerShowTimeout = setTimeout(() => {
+            banner.classList.add('show');
+            
+            // Auto-hide after 3 seconds
+            this.bannerHideTimeout = setTimeout(() => {
+                banner.classList.remove('show');
+            }, 3000);
+        },100); // Brief delay to let hide transition play
+    },
+
+    bannerShowTimeout: null,
+    bannerHideTimeout: null,
 
     escapeHtml(text) {
         const div = document.createElement('div');
