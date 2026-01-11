@@ -5,7 +5,7 @@
             "name":"Personal Website",
             "description":[
                 "- Developed a personal website to showcase my experience and skills",
-                "- Created the website with Javascript, HTML, and CSS",
+                "- Created the website with AI tools in Javascript, HTML, and CSS",
                 "- Deployed the website with Github Pages"
             ],
             "date":"December 2025",
@@ -13,9 +13,9 @@
             "favorite":false
         },
         {
-            "name":"ChatGPT Prompt and Context Manager Chrome Extension",
+            "name":"ChatGPT Workflow Optimization Chrome Extension",
             "description":[
-                "- Added features to an existing Chrome Extension for ChatGPT workflow functionality",
+                "- Added features to an existing chrome extension for ChatGPT workflow optimization",
                 "- Features include prompt injection, context management, and prompt organization"
             ],
             "date":"October 2025",
@@ -25,8 +25,10 @@
         {
             "name":"ThoughtNode Python Module",
             "description":[
-                "- Developed ThoughtNode, a Python module that improves information accessibility",
-                "- ThoughtNode is an automated email digest system that provides AI generated insights, obtained from web-scraped data on selected topics"
+                "- Created ThoughtNode, an AI enhanced email digest system that keeps businesses up to date on market trends and users informed on their interests",
+                "- ThoughtNode web-scrapes and crawls to find information related to custom user topics",
+                "- Next, it uses an AI API to summarize data and extract insights",
+                "- Finally, this information is emailed to users periodically"
             ],
             "date":"June 2025 - August 2025",
             "link":"https://github.com/CustomerNode/ThoughtNode",
@@ -35,8 +37,8 @@
         {
             "name":"LLM Chain-of-Thought Reasoning Paper",
             "description":[
-                "- Implemented Chain-of-Thought Reasoning for a Language Model with Columbia University peers, Shayan Chowdhury and Priscilla Zhu",
-                "- Fine-tuned Meta’s Llama-3.1-8B with Google’s Gemini 1.5 Pro as an evaluator of the models reponses to questions from the AGIEval Math dataset"
+                "- Co-Authored unpublished Chain-of-Thought Reasoning paper with Columbia University peers, Shayan Chowdhury and Priscilla Zhu",
+                "- Fine-tuned Meta’s Llama-3.1-8B with questions from the AGIEval Math dataset, and used Google’s Gemini 1.5 Pro as an evaluator"
             ],
             "date":"September 2024 - December 2024",
             "link":"https://drive.google.com/file/d/1pjjCkzautfjNQyQ0CnutVbVhPhpNsbYK/",
