@@ -16,7 +16,8 @@ const CONFIG = {
         projectsHome: '#projects-home',
         projectsPage: '#projects-page',
         datesColumn: '#dates-column',
-        unavailableBanner: '#unavailable-banner'
+        unavailableBanner: '#unavailable-banner',
+        skillsContainer: '#skills-container'
     },
     classes: {
         pageHome: 'page-home',
@@ -407,6 +408,503 @@ const DateTracker = {
 };
 
 // =============================================================================
+// SKILLS
+// =============================================================================
+
+/**
+ * Manage skills loading, line-based display, and animated swapping
+ * 
+ * Algorithm:
+ * 1. Calculate the width of 4 lines based on container width
+ * 2. Measure width of all skills using a hidden measurement element
+ * 3. Fill each line using percentage-based algorithm:
+ *    - Randomly select skills and add to line if they fit
+ *    - Continue until 80% fill is reached
+ *    - Once at/above 80%, keep trying until a failure occurs
+ *    - Single failure at >=80% terminates fill, move to next line
+ * 4. Swap every 1.5 seconds:
+ *    - Select a random line and 1-3 adjacent skills
+ *    - Calculate remaining line width without those skills
+ *    - Find replacement skills using fill algorithm
+ *    - Replace at same position with extended animation
+ */
+const Skills = {
+    container: null,
+    allSkills: [],           // All available skills
+    lines: [[], [], [], []],     // Skills on each of the 4 lines
+    lineContainers: [],      // DOM containers for each line
+    lineElements: [[], [], [], []], // DOM elements for each line
+    lineLocks: [false, false, false, false], // Prevent concurrent swaps on same line
+    animationInterval: null, // Store interval ID for cleanup
+    skillWidths: {},         // Cache of skill name -> pixel width
+    lineWidth: 0,            // Available width per line
+    gap: 8,                  // Gap between skills (--space-sm)
+    highlightDuration: 800,     // Duration to show highlight (same for old and new skills)
+    fadeOutDuration: 500,       // Duration for old skills to fade out (ms)
+    fadeInDuration: 600,        // Duration for new skills to fade in (ms)
+    
+    async init() {
+        this.container = $(CONFIG.selectors.skillsContainer);
+        if (!this.container) return;
+
+        try {
+            const response = await fetch('/skills.json');
+            const data = await response.json();
+            this.processSkills(data.skills);
+            this.calculateLineWidth();
+            this.measureAllSkills();
+            this.fillAllLines();
+            this.render();
+            this.startAnimation();
+            
+            // Recalculate on resize
+            window.addEventListener('resize', () => this.handleResize());
+        } catch (error) {
+            console.error('Failed to load skills:', error);
+        }
+    },
+
+    processSkills(skillsArray) {
+        // Skills are now a flat array of strings
+        this.allSkills = skillsArray.map(name => ({ name }));
+        this.shuffleArray(this.allSkills);
+    },
+
+    calculateLineWidth() {
+        const containerRect = this.container.getBoundingClientRect();
+        // Account for container padding
+        this.lineWidth = containerRect.width - 32;
+        
+        // Get gap from CSS
+        const computedStyle = getComputedStyle(this.container);
+        this.gap = parseInt(computedStyle.gap) || 8;
+    },
+
+    measureAllSkills() {
+        // Create a hidden measurement element matching skill-box styles
+        const measureEl = document.createElement('div');
+        measureEl.className = 'skill-box';
+        measureEl.style.cssText = 'position: absolute; visibility: hidden; white-space: nowrap;';
+        document.body.appendChild(measureEl);
+        
+        this.skillWidths = {};
+        this.allSkills.forEach(skill => {
+            measureEl.textContent = skill.name;
+            // Add padding (16px on each side from --space-md)
+            this.skillWidths[skill.name] = measureEl.offsetWidth;
+        });
+        
+        document.body.removeChild(measureEl);
+    },
+
+    getSkillWidth(skill) {
+        return this.skillWidths[skill.name] || 100;
+    },
+
+    /**
+     * Fill a line using percentage-based algorithm
+     * Returns array of skills that fit on the line
+     * 
+     * Algorithm:
+     * - Keep selecting random skills until 80% fill is reached
+     * - Once at or above 80%, any failure (skill doesn't fit) terminates
+     * - Never exceed 100%
+     */
+    fillLine(availableSkills, lineWidth) {
+        const result = [];
+        let currentWidth = 0;
+        const used = new Set();
+        const targetPercentage = 0.8; // 80% threshold
+        
+        // Create a shuffled copy of available skills
+        const shuffled = [...availableSkills];
+        this.shuffleArray(shuffled);
+        
+        let attempts = 0;
+        const maxAttempts = shuffled.length * 3; // Prevent infinite loops
+        
+        while (attempts < maxAttempts) {
+            // Randomly pick a skill from shuffled pool
+            const randomIndex = Math.floor(Math.random() * shuffled.length);
+            const skill = shuffled[randomIndex];
+            
+            // Skip if already used on this line
+            if (used.has(skill.name)) {
+                attempts++;
+                continue;
+            }
+            
+            const skillWidth = this.getSkillWidth(skill);
+            const gapWidth = result.length > 0 ? this.gap : 0;
+            const newWidth = currentWidth + gapWidth + skillWidth;
+            
+            // Calculate current fill percentage
+            const currentPercentage = currentWidth / lineWidth;
+            
+            if (newWidth <= lineWidth) {
+                // Skill fits, add to line
+                result.push(skill);
+                currentWidth = newWidth;
+                used.add(skill.name);
+            } else {
+                // Skill doesn't fit
+                if (currentPercentage >= targetPercentage) {
+                    // At or above 80% - single failure terminates
+                    break;
+                }
+                // Below 80% - keep trying other skills
+            }
+            
+            attempts++;
+        }
+        
+        return result;
+    },
+
+    fillAllLines() {
+        this.lines = [[], [], [], []];
+        
+        // Track all skills used across lines
+        let usedSkills = new Set();
+        
+        for (let i = 0; i < 4; i++) {
+            // Get available skills (not yet used on any line)
+            const available = this.allSkills.filter(s => !usedSkills.has(s.name));
+            
+            if (available.length === 0) break;
+            
+            // Fill this line
+            this.lines[i] = this.fillLine(available, this.lineWidth);
+            
+            // Mark these skills as used
+            this.lines[i].forEach(s => usedSkills.add(s.name));
+        }
+    },
+
+    render() {
+        // Clear container
+        this.container.innerHTML = '';
+        this.lineContainers = [];
+        this.lineElements = [[], [], [], []];
+        
+        let elementIndex = 0;
+        
+        // Create separate container for each line
+        for (let lineIndex = 0; lineIndex < 4; lineIndex++) {
+            const lineContainer = document.createElement('div');
+            lineContainer.className = 'skills-line';
+            lineContainer.dataset.lineIndex = lineIndex;
+            this.container.appendChild(lineContainer);
+            this.lineContainers.push(lineContainer);
+            
+            const lineSkills = this.lines[lineIndex];
+            
+            lineSkills.forEach((skill) => {
+                const box = this.createSkillBox(skill, lineIndex);
+                lineContainer.appendChild(box);
+                this.lineElements[lineIndex].push(box);
+                
+                // Stagger fade-in animation
+                const idx = elementIndex++;
+                setTimeout(() => {
+                    box.classList.remove('fade-in');
+                    box.classList.add('visible');
+                }, 50 + idx * 30);
+            });
+        }
+    },
+
+    createSkillBox(skill, lineIndex) {
+        const box = document.createElement('div');
+        box.className = 'skill-box fade-in';
+        box.setAttribute('role', 'listitem');
+        box.textContent = skill.name;
+        box.dataset.skillName = skill.name;
+        box.dataset.lineIndex = lineIndex;
+        return box;
+    },
+
+    startAnimation() {
+        if (prefersReducedMotion()) return;
+        
+        // Clear any existing interval
+        this.stopAnimation();
+        
+        // Reset line locks
+        this.lineLocks = [false, false, false, false];
+        
+        // Start swaps at regular intervals (allows overlapping animations)
+        // Animation duration ~2700ms, interval 1500ms = overlapping swaps
+        this.animationInterval = setInterval(() => this.performSwap(), 1500);
+        
+        // Set up visibility change handler (only once)
+        if (!this.visibilityHandlerBound) {
+            this.visibilityHandlerBound = true;
+            document.addEventListener('visibilitychange', () => this.handleVisibilityChange());
+        }
+    },
+
+    stopAnimation() {
+        if (this.animationInterval) {
+            clearInterval(this.animationInterval);
+            this.animationInterval = null;
+        }
+    },
+
+    handleVisibilityChange() {
+        if (document.hidden) {
+            // Tab is hidden - stop the animation to prevent accumulating highlights
+            this.stopAnimation();
+        } else {
+            // Tab is visible again - clean up any stale highlights and restart
+            this.cleanupHighlights();
+            this.startAnimation();
+        }
+    },
+
+    cleanupHighlights() {
+        // Remove all highlight and animation classes from skill boxes
+        const allSkillBoxes = this.container?.querySelectorAll('.skill-box');
+        if (allSkillBoxes) {
+            allSkillBoxes.forEach(box => {
+                box.classList.remove('highlighted', 'fading-out', 'fading-in');
+                // Ensure visible state
+                if (!box.classList.contains('visible')) {
+                    box.classList.add('visible');
+                }
+            });
+        }
+        
+        // Reset all line locks
+        this.lineLocks = [false, false, false, false];
+    },
+
+    /**
+     * Try to find a valid swap configuration
+     * Returns swap data if successful, null if no valid swap found
+     */
+    tryFindSwap() {
+        // Select a random line (0, 1, 2, or 3)
+        const lineIndex = Math.floor(Math.random() * 4);
+        
+        // Skip if this line is already being swapped
+        if (this.lineLocks[lineIndex]) {
+            return null;
+        }
+        
+        const lineSkills = this.lines[lineIndex];
+        const lineElements = this.lineElements[lineIndex];
+        
+        if (lineSkills.length === 0) {
+            return null;
+        }
+        
+        // Select 1-3 adjacent skills to swap
+        const swapCount = Math.floor(Math.random() * 3) + 1; // 1, 2, or 3
+        
+        // Select random starting position for adjacent skills
+        const maxStart = Math.max(0, lineSkills.length - swapCount);
+        const startIndex = Math.floor(Math.random() * (maxStart + 1));
+        const endIndex = Math.min(startIndex + swapCount, lineSkills.length);
+        const actualSwapCount = endIndex - startIndex;
+        
+        if (actualSwapCount === 0) {
+            return null;
+        }
+        
+        // Get skills being removed
+        const removedSkills = lineSkills.slice(startIndex, endIndex);
+        const removedElements = lineElements.slice(startIndex, endIndex);
+        
+        // Calculate remaining line width after removal
+        let remainingWidth = 0;
+        for (let i = 0; i < lineSkills.length; i++) {
+            if (i < startIndex || i >= endIndex) {
+                remainingWidth += this.getSkillWidth(lineSkills[i]);
+            }
+        }
+        // Add gaps for remaining skills
+        const remainingCount = lineSkills.length - actualSwapCount;
+        if (remainingCount > 1) {
+            remainingWidth += (remainingCount - 1) * this.gap;
+        }
+        
+        // Calculate available width for new skills (including gap to adjacent skills)
+        const hasSkillsBefore = startIndex > 0;
+        const hasSkillsAfter = endIndex < lineSkills.length;
+        const extraGaps = (hasSkillsBefore ? 1 : 0) + (hasSkillsAfter ? 1 : 0);
+        const availableWidth = this.lineWidth - remainingWidth - (extraGaps * this.gap);
+        
+        // Get all currently displayed skill names (including those being removed)
+        // Skills being removed should NOT be available as replacements
+        const displayedNames = new Set();
+        this.lines.forEach(line => line.forEach(s => displayedNames.add(s.name)));
+        
+        // Get available skills for replacement (must not be currently displayed)
+        const availableSkills = this.allSkills.filter(s => !displayedNames.has(s.name));
+        
+        if (availableSkills.length === 0) {
+            return null;
+        }
+        
+        // Fill the available width using the seen-list algorithm
+        const newSkills = this.fillLine(availableSkills, availableWidth);
+        
+        if (newSkills.length === 0) {
+            return null;
+        }
+        
+        // Return all swap data
+        return {
+            lineIndex,
+            lineSkills,
+            lineElements,
+            startIndex,
+            endIndex,
+            removedSkills,
+            removedElements,
+            newSkills
+        };
+    },
+
+    performSwap() {
+        // Try to find a valid swap (retry up to 5 times if needed)
+        let swapData = null;
+        let attempts = 0;
+        
+        while (!swapData && attempts < 5) {
+            swapData = this.tryFindSwap();
+            attempts++;
+        }
+        
+        // If no valid swap found, skip this cycle
+        if (!swapData) {
+            return;
+        }
+        
+        const {
+            lineIndex,
+            lineSkills,
+            lineElements,
+            startIndex,
+            endIndex,
+            removedElements,
+            newSkills
+        } = swapData;
+        
+        // Lock this line to prevent concurrent swaps
+        this.lineLocks[lineIndex] = true;
+        
+        // Now that we have confirmed replacement skills, highlight old skills
+        removedElements.forEach(el => {
+            if (el) el.classList.add('highlighted');
+        });
+        
+        // After highlight duration, fade out old skills
+        setTimeout(() => {
+            removedElements.forEach(el => {
+                if (el) el.classList.add('fading-out');
+            });
+            
+            // After fade out completes, swap the elements
+            setTimeout(() => {
+                // Create new elements (start hidden for fade-in)
+                const newElements = newSkills.map(skill => {
+                    const box = this.createSkillBox(skill, lineIndex);
+                    box.classList.remove('fade-in');
+                    box.classList.add('fading-in');
+                    return box;
+                });
+                
+                // Find insertion point in DOM (use line container, not main container)
+                const lineContainer = this.lineContainers[lineIndex];
+                const insertBeforeElement = removedElements[0];
+                
+                // Insert new elements at the same position within the line
+                newElements.forEach(el => {
+                    lineContainer.insertBefore(el, insertBeforeElement);
+                });
+                
+                // Remove old elements from DOM
+                removedElements.forEach(el => {
+                    if (el && el.parentNode) el.remove();
+                });
+                
+                // Update data structures
+                this.lines[lineIndex] = [
+                    ...lineSkills.slice(0, startIndex),
+                    ...newSkills,
+                    ...lineSkills.slice(endIndex)
+                ];
+                
+                this.lineElements[lineIndex] = [
+                    ...lineElements.slice(0, startIndex),
+                    ...newElements,
+                    ...lineElements.slice(endIndex)
+                ];
+                
+                // Update line indices in data attributes
+                this.lineElements[lineIndex].forEach(el => {
+                    el.dataset.lineIndex = lineIndex;
+                });
+                
+                // Trigger fade-in animation with highlight
+                requestAnimationFrame(() => {
+                    newElements.forEach(el => {
+                        if (el) {
+                            el.classList.remove('fading-in');
+                            el.classList.add('visible', 'highlighted');
+                        }
+                    });
+                });
+                
+                // Remove highlight after same duration as old skills
+                setTimeout(() => {
+                    newElements.forEach(el => {
+                        if (el) el.classList.remove('highlighted');
+                    });
+                    
+                    // Unlock this line for future swaps
+                    this.lineLocks[lineIndex] = false;
+                }, this.fadeInDuration + this.highlightDuration);
+            }, this.fadeOutDuration);
+        }, this.highlightDuration);
+    },
+
+    shuffleArray(array) {
+        for (let i = array.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [array[i], array[j]] = [array[j], array[i]];
+        }
+        return array;
+    },
+
+    handleResize() {
+        // Stop animation immediately to prevent errors with stale references
+        this.stopAnimation();
+        
+        // Debounce resize handler
+        clearTimeout(this.resizeTimeout);
+        this.resizeTimeout = setTimeout(() => {
+            const oldWidth = this.lineWidth;
+            this.calculateLineWidth();
+            
+            // If width changed significantly, refill lines
+            if (Math.abs(this.lineWidth - oldWidth) > 50) {
+                this.measureAllSkills();
+                this.fillAllLines();
+                this.render();
+            }
+            
+            // Restart animation after resize settles
+            this.startAnimation();
+        }, 250);
+    },
+
+    resizeTimeout: null
+};
+
+// =============================================================================
 // FOOTER
 // =============================================================================
 
@@ -430,4 +928,5 @@ document.addEventListener('DOMContentLoaded', () => {
     Footer.init();
     Navigation.init();
     Projects.init();
+    Skills.init();
 });
