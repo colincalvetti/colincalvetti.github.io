@@ -5,9 +5,9 @@
             "name":"Portfolio Website",
             "description":
             [
-                "- Created a portfolio website to showcase my experience and skills",
-                "- Developed the website with AI tools, JavaScript, HTML, and CSS",
-                "- Deployed the website with Github Pages"
+                "Created a portfolio website to showcase my experience and skills",
+                "Developed the website with AI tools, JavaScript, HTML, and CSS",
+                "Deployed the website with Github Pages"
             ],
             "date":"December 2025",
             "link":"https://github.com/colincalvetti/colincalvetti.github.io",
@@ -17,8 +17,8 @@
             "name":"ChatGPT Workflow Optimization Chrome Extension",
             "description":
             [
-                "- Added features to an existing chrome extension for ChatGPT workflow optimization",
-                "- Features include prompt injection, context management, and prompt organization"
+                "Added features to an existing chrome extension for ChatGPT workflow optimization",
+                "Features include prompt injection, context management, and prompt organization"
             ],
             "date":"October 2025",
             "link":"https://github.com/colincalvetti/chatgpt_sys_prompts_chrome_extension/tree/featureupdate",
@@ -28,10 +28,10 @@
             "name":"ThoughtNode Python Module",
             "description":
             [
-                "- Created ThoughtNode, an AI enhanced email digest system that keeps businesses up to date on market trends and users informed on their interests",
-                "- ThoughtNode web-scrapes and crawls to find information related to custom user topics",
-                "- Next, it uses an AI API to summarize data and extract insights",
-                "- Finally, this information is emailed to users periodically"
+                "Created ThoughtNode, an AI enhanced email digest system that keeps businesses up to date on market trends and users informed on their interests",
+                "ThoughtNode web-scrapes and crawls to find information related to custom user topics",
+                "Next, it uses an AI API to summarize data and extract insights",
+                "Finally, this information is emailed to users periodically"
             ],
             "date":"June 2025 - August 2025",
             "link":"https://github.com/CustomerNode/ThoughtNode",
@@ -41,8 +41,8 @@
             "name":"LLM Chain-of-Thought Reasoning Paper",
             "description":
             [
-                "- Co-Authored unpublished Chain-of-Thought Reasoning paper with Columbia University peers, Shayan Chowdhury and Priscilla Zhu",
-                "- Fine-tuned Meta's Llama-3.1-8B with questions from the AGIEval Math dataset, and used Google's Gemini 1.5 Pro as an evaluator"
+                "Co-Authored unpublished Chain-of-Thought Reasoning paper with Columbia University peers, Shayan Chowdhury and Priscilla Zhu",
+                "Fine-tuned Meta's Llama-3.1-8B with questions from the AGIEval Math dataset, and used Google's Gemini 1.5 Pro as an evaluator"
             ],
             "date":"September 2024 - December 2024",
             "link":"https://drive.google.com/file/d/1pjjCkzautfjNQyQ0CnutVbVhPhpNsbYK/",

@@ -1,12 +1,24 @@
 /**
  * Colin Calvetti - Personal Website
- * Main JavaScript Module
+ * Clean, modular JavaScript architecture
  * 
- * Clean, modular, and accessible JavaScript architecture
+ * Table of Contents:
+ * 1. Configuration
+ * 2. Utilities
+ * 3. HoverDropdown Base Class
+ * 4. Navigation
+ * 5. Projects
+ * 6. Date Tracker
+ * 7. Skills
+ * 8. Info Tooltip
+ * 9. Settings
+ * 10. Footer
+ * 11. Global Scroll Handler
+ * 12. Initialization
  */
 
 // =============================================================================
-// CONFIGURATION
+// 1. CONFIGURATION
 // =============================================================================
 const CONFIG = {
     selectors: {
@@ -22,33 +34,31 @@ const CONFIG = {
     classes: {
         pageHome: 'page-home',
         pageProjects: 'page-projects',
-        highlighted: 'highlighted'
+        highlighted: 'highlighted',
+        animationsDisabled: 'animations-disabled'
     },
     storage: {
-        currentPage: 'currentPage'
+        currentPage: 'currentPage',
+        animationsEnabled: 'animationsEnabled'
     },
-    animation: {
-        fadeZone: 50
+    // Animation timings (should match CSS variables)
+    timing: {
+        highlightDuration: 800,
+        fadeOutDuration: 500,
+        fadeInDuration: 600,
+        bannerDuration: 3000,
+        swapInterval: 1500,
+        hideTimeout: 500,
+        resizeDebounce: 250
     }
 };
 
 // =============================================================================
-// UTILITIES
+// 2. UTILITIES
 // =============================================================================
-
-/**
- * Safely query a DOM element
- */
 const $ = (selector) => document.querySelector(selector);
-
-/**
- * Safely query all matching DOM elements
- */
 const $$ = (selector) => document.querySelectorAll(selector);
 
-/**
- * Determine current page from URL path
- */
 const getCurrentPage = () => {
     const path = window.location.pathname;
     if (path === '/' || path === '/index.html') return 'home';
@@ -56,113 +66,275 @@ const getCurrentPage = () => {
     return null;
 };
 
-/**
- * Check if user prefers reduced motion
- */
-const prefersReducedMotion = () => {
-    return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+const prefersReducedMotion = () => 
+    window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+const isMobile = () => window.innerWidth <= 900;
+
+const isTouchDevice = () => 
+    'ontouchstart' in window || navigator.maxTouchPoints > 0;
+
+const debounce = (fn, delay) => {
+    let timeoutId;
+    return (...args) => {
+        clearTimeout(timeoutId);
+        timeoutId = setTimeout(() => fn(...args), delay);
+    };
+};
+
+const escapeHtml = (text) => {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
 };
 
 // =============================================================================
-// NAVIGATION
+// 3. HOVER DROPDOWN BASE CLASS
 // =============================================================================
+class HoverDropdown {
+    constructor(triggerSelector, dropdownSelector, wrapperSelector = null) {
+        this.trigger = $(triggerSelector);
+        this.dropdown = $(dropdownSelector);
+        this.wrapper = wrapperSelector ? $(wrapperSelector) : null;
+        this.hideTimeout = null;
+        this.isActive = false;
+    }
 
-/**
- * Initialize and manage navigation state
- */
-const Navigation = {
     init() {
-        // Get previous page BEFORE setting current page
+        if (!this.trigger || !this.dropdown) return;
+
+        // Desktop hover events (only for non-touch devices)
+        if (!isTouchDevice()) {
+            this.trigger.addEventListener('mouseenter', () => this.activate());
+            this.trigger.addEventListener('mouseleave', () => this.startHideTimer());
+            this.dropdown.addEventListener('mouseenter', () => this.cancelHideTimer());
+            this.dropdown.addEventListener('mouseleave', () => this.startHideTimer());
+        }
+
+        // Touch/click events
+        this.trigger.addEventListener('click', (e) => this._handleClick(e));
+        document.addEventListener('click', (e) => this._handleOutsideClick(e));
+    }
+
+    _handleClick(e) {
+        if (isTouchDevice() || isMobile()) {
+            e.preventDefault();
+            e.stopPropagation();
+            this.isActive ? this.deactivate() : this.activate();
+        }
+    }
+
+    _handleOutsideClick(e) {
+        if (!this.isActive) return;
+        const container = this.wrapper || this.trigger;
+        if (!container.contains(e.target) && !this.dropdown.contains(e.target)) {
+            this.deactivate();
+        }
+    }
+
+    activate() {
+        this.cancelHideTimer();
+        if (!this.isActive) {
+            this.isActive = true;
+            this.onActivate();
+        }
+    }
+
+    deactivate() {
+        if (this.isActive) {
+            this.isActive = false;
+            this.onDeactivate();
+        }
+    }
+
+    startHideTimer() {
+        this.cancelHideTimer();
+        this.hideTimeout = setTimeout(() => this.deactivate(), CONFIG.timing.hideTimeout);
+    }
+
+    cancelHideTimer() {
+        if (this.hideTimeout) {
+            clearTimeout(this.hideTimeout);
+            this.hideTimeout = null;
+        }
+    }
+
+    onActivate() {}
+    onDeactivate() {}
+}
+
+// =============================================================================
+// 4. NAVIGATION
+// =============================================================================
+const Navigation = {
+    indicator: null,
+    navName: null,
+    navProjects: null,
+    isHovering: false,
+
+    init() {
+        this.indicator = $(CONFIG.selectors.navIndicator);
+        this.navName = $('.nav-name');
+        this.navProjects = $('.nav-projects');
+
+        if (!this.indicator || !this.navName || !this.navProjects) return;
+
         const previousPage = sessionStorage.getItem(CONFIG.storage.currentPage);
         this.setActiveNavItem();
         this.setupIndicatorAnimation(previousPage);
+        this.setupHoverListeners();
+
+        // Debounced resize handler
+        this._resizeHandler = debounce(() => this.updateIndicator(false), CONFIG.timing.resizeDebounce);
+        window.addEventListener('resize', this._resizeHandler);
+    },
+
+    setupHoverListeners() {
+        [this.navName, this.navProjects].forEach(link => {
+            link.addEventListener('mouseenter', () => {
+                if (link.getAttribute('aria-current') === 'page') {
+                    this.isHovering = true;
+                    this.updateIndicator(true);
+                }
+            });
+            link.addEventListener('mouseleave', () => {
+                if (this.isHovering) {
+                    this.isHovering = false;
+                    this.updateIndicator(true);
+                }
+            });
+        });
     },
 
     setActiveNavItem() {
         const currentPage = getCurrentPage();
-        const previousPage = sessionStorage.getItem(CONFIG.storage.currentPage);
-        const indicator = $(CONFIG.selectors.navIndicator);
         const navLinks = $$(CONFIG.selectors.navLinks);
 
-        // Handle non-main pages (like unavailable)
+        document.body.classList.remove(CONFIG.classes.pageHome, CONFIG.classes.pageProjects);
+
         if (!currentPage) {
-            if (indicator) indicator.style.opacity = '0';
-            document.body.classList.remove(CONFIG.classes.pageHome, CONFIG.classes.pageProjects);
-            document.body.classList.add(`page-${previousPage || 'home'}`);
+            // 404 or unknown page - hide indicator, use previous page for nav positioning
+            const previousPage = sessionStorage.getItem(CONFIG.storage.currentPage) || 'home';
+            if (this.indicator) this.indicator.style.opacity = '0';
+            document.body.classList.add(`page-${previousPage}`);
             navLinks.forEach(link => link.removeAttribute('aria-current'));
             return;
         }
 
-        // Set page class for navigation positioning
-        document.body.classList.remove(CONFIG.classes.pageHome, CONFIG.classes.pageProjects);
         document.body.classList.add(`page-${currentPage}`);
-
-        // Ensure indicator is visible
-        if (indicator) indicator.style.opacity = '';
-
-        // Store current page for next navigation
+        if (this.indicator) this.indicator.style.opacity = '';
         sessionStorage.setItem(CONFIG.storage.currentPage, currentPage);
 
-        // Update active states
         navLinks.forEach(link => {
             const href = link.getAttribute('href');
             const isActive = (currentPage === 'home' && href === '/') ||
                            (currentPage === 'projects' && href === '/projects/');
-            
             link.setAttribute('aria-current', isActive ? 'page' : '');
         });
+
+        this.updateIndicator(false);
     },
 
     setupIndicatorAnimation(previousPage) {
         const currentPage = getCurrentPage();
-        const indicator = $(CONFIG.selectors.navIndicator);
-
-        // Only animate if we have a previous page that differs from current
-        if (!indicator || !previousPage || previousPage === currentPage || prefersReducedMotion()) {
+        // Check animations state from localStorage directly to avoid race condition with Settings.init()
+        const savedAnimations = localStorage.getItem(CONFIG.storage.animationsEnabled);
+        const animationsEnabled = savedAnimations !== 'false';
+        const animationsDisabled = prefersReducedMotion() || !animationsEnabled;
+        
+        if (!this.indicator || !previousPage || previousPage === currentPage || animationsDisabled) {
             return;
         }
 
-        // Get positions based on viewport
-        const positions = this.getNavPositions();
+        const previousLink = previousPage === 'home' ? this.navName : this.navProjects;
+        const textWidth = this.getTextWidth(previousLink);
+        const previousRect = previousLink.getBoundingClientRect();
+        const previousCenter = previousRect.left + previousRect.width / 2;
+
+        this.indicator.style.transition = 'none';
+        this.indicator.style.left = `${previousCenter}px`;
+        this.indicator.style.width = `${textWidth}px`;
+        this.indicator.offsetHeight; // Force reflow
         
-        // Start indicator at previous position (no transition)
-        indicator.style.transition = 'none';
-        indicator.style.left = previousPage === 'home' ? positions.home : positions.projects;
-        
-        // Force reflow
-        indicator.offsetHeight;
-        
-        // Small delay then animate to new position
-        setTimeout(() => {
-            indicator.style.transition = '';
-            indicator.style.left = '';
-        }, 20);
+        setTimeout(() => this.updateIndicator(true), 20);
     },
 
-    getNavPositions() {
-        const width = window.innerWidth;
-        if (width <= 480) return { home: '22%', projects: '78%' };
-        if (width <= 900) return { home: '20%', projects: '80%' };
-        return { home: '15%', projects: '50%' };
+    getTextWidth(element) {
+        const measureSpan = document.createElement('span');
+        measureSpan.style.cssText = `
+            position: absolute;
+            visibility: hidden;
+            white-space: nowrap;
+            font-family: ${getComputedStyle(element).fontFamily};
+            font-size: ${getComputedStyle(element).fontSize};
+            font-weight: ${getComputedStyle(element).fontWeight};
+        `;
+        measureSpan.textContent = element.textContent.trim();
+        document.body.appendChild(measureSpan);
+        const width = measureSpan.offsetWidth;
+        document.body.removeChild(measureSpan);
+        return width;
+    },
+
+    updateIndicator(animate = true) {
+        const currentPage = getCurrentPage();
+        if (!currentPage || !this.indicator) return;
+
+        const activeLink = currentPage === 'home' ? this.navName : this.navProjects;
+        const rect = activeLink.getBoundingClientRect();
+        const centerX = rect.left + rect.width / 2;
+        const width = this.isHovering ? rect.width : this.getTextWidth(activeLink);
+
+        this.indicator.style.transition = animate ? '' : 'none';
+        this.indicator.style.left = `${centerX}px`;
+        this.indicator.style.width = `${width}px`;
+
+        if (!animate) {
+            this.indicator.offsetHeight;
+            this.indicator.style.transition = '';
+        }
     }
 };
 
 // =============================================================================
-// PROJECTS
+// 5. PROJECTS
 // =============================================================================
-
-/**
- * Manage project loading and rendering
- */
 const Projects = {
+    bannerTimeout: null,
+
     async init() {
+        const homeContainer = $(CONFIG.selectors.projectsHome);
+        const pageContainer = $(CONFIG.selectors.projectsPage);
+        
+        // Skip if no containers exist on this page
+        if (!homeContainer && !pageContainer) return;
+        
         try {
             const response = await fetch('/projects.json');
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+            }
             const data = await response.json();
+            
+            if (!data.projects || !Array.isArray(data.projects)) {
+                throw new Error('Invalid projects data format');
+            }
+            
             this.render(data.projects);
         } catch (error) {
             console.error('Failed to load projects:', error);
+            // Show user-friendly error message
+            this.renderError(homeContainer || pageContainer);
         }
+    },
+    
+    renderError(container) {
+        if (!container) return;
+        container.innerHTML = `
+            <div class="project-card" style="text-align: center; color: var(--color-text-muted);">
+                <p>Unable to load projects. Please refresh the page.</p>
+            </div>
+        `;
     },
 
     render(projects) {
@@ -170,45 +342,34 @@ const Projects = {
         const pageContainer = $(CONFIG.selectors.projectsPage);
 
         if (homeContainer) {
-            this.renderHomeProjects(projects, homeContainer);
+            projects.filter(p => p.favorite).forEach(project => {
+                homeContainer.appendChild(this.createCard(project, true));
+            });
         }
 
         if (pageContainer) {
-            this.renderPageProjects(projects, pageContainer);
-        }
-    },
+            const datesColumn = $(CONFIG.selectors.datesColumn);
+            const projectCards = [];
+            const dateElements = [];
 
-    renderHomeProjects(projects, container) {
-        const favorites = projects.filter(p => p.favorite);
-        
-        favorites.forEach(project => {
-            const card = this.createCard(project, true);
-            container.appendChild(card);
-        });
-    },
+            projects.forEach((project, index) => {
+                const card = this.createCard(project, false, index);
+                pageContainer.appendChild(card);
+                projectCards.push(card);
 
-    renderPageProjects(projects, container) {
-        const datesColumn = $(CONFIG.selectors.datesColumn);
-        const projectCards = [];
-        const dateElements = [];
+                if (datesColumn) {
+                    const dateEl = document.createElement('div');
+                    dateEl.className = 'date-item';
+                    dateEl.textContent = project.date;
+                    dateEl.dataset.index = index;
+                    datesColumn.appendChild(dateEl);
+                    dateElements.push(dateEl);
+                }
+            });
 
-        projects.forEach((project, index) => {
-            const card = this.createCard(project, false, index);
-            container.appendChild(card);
-            projectCards.push(card);
-
-            if (datesColumn) {
-                const dateEl = document.createElement('div');
-                dateEl.className = 'date-item';
-                dateEl.textContent = project.date;
-                dateEl.dataset.index = index;
-                datesColumn.appendChild(dateEl);
-                dateElements.push(dateEl);
+            if (datesColumn && dateElements.length > 0) {
+                DateTracker.init(pageContainer, projectCards, dateElements);
             }
-        });
-
-        if (datesColumn && dateElements.length > 0) {
-            DateTracker.init(container, projectCards, dateElements);
         }
     },
 
@@ -230,29 +391,29 @@ const Projects = {
             });
         }
 
+        const titleHTML = `
+            <h3 class="project-title">
+                ${escapeHtml(project.name)}
+                <span class="external-icon" aria-hidden="true">↗</span>
+            </h3>
+        `;
+
         if (isHome) {
             card.innerHTML = `
-                <h3 class="project-title">
-                    ${this.escapeHtml(project.name)}
-                    <span class="external-icon" aria-hidden="true">↗</span>
-                </h3>
+                <div class="project-header-home">
+                    ${titleHTML}
+                    <span class="project-date-home">${escapeHtml(project.date)}</span>
+                </div>
             `;
         } else {
             const descriptionHTML = project.description
-                .map(desc => `<p>${this.escapeHtml(desc)}</p>`)
+                .map(desc => `<p><span class="desc-bullet">-</span><span class="desc-text">${escapeHtml(desc)}</span></p>`)
                 .join('');
 
             card.innerHTML = `
-                <div class="project-header">
-                    <h3 class="project-title">
-                        ${this.escapeHtml(project.name)}
-                        <span class="external-icon" aria-hidden="true">↗</span>
-                    </h3>
-                </div>
-                <div class="project-description">
-                    ${descriptionHTML}
-                </div>
-                <div class="project-date-inline">${this.escapeHtml(project.date)}</div>
+                <div class="project-header">${titleHTML}</div>
+                <div class="project-description">${descriptionHTML}</div>
+                <div class="project-date-inline">${escapeHtml(project.date)}</div>
             `;
         }
 
@@ -266,80 +427,58 @@ const Projects = {
             banner = document.createElement('div');
             banner.id = 'unavailable-banner';
             banner.className = 'unavailable-banner';
+            banner.setAttribute('role', 'alert');
+            banner.setAttribute('aria-live', 'polite');
             banner.innerHTML = `
-                <span class="banner-icon" aria-hidden="true">&#9888</span>
+                <span class="banner-icon" aria-hidden="true">⚠</span>
                 <span class="banner-text">Link Unavailable</span>
             `;
             document.body.appendChild(banner);
         }
 
-        // Hide banner first, then show after a brief delay
         banner.classList.remove('show');
+        clearTimeout(this.bannerTimeout);
         
-        clearTimeout(this.bannerShowTimeout);
-        clearTimeout(this.bannerHideTimeout);
-        
-        this.bannerShowTimeout = setTimeout(() => {
+        // Small delay to ensure CSS transition triggers
+        requestAnimationFrame(() => {
             banner.classList.add('show');
-            
-            // Auto-hide after 3 seconds
-            this.bannerHideTimeout = setTimeout(() => {
+            this.bannerTimeout = setTimeout(() => {
                 banner.classList.remove('show');
-            }, 3000);
-        },100); // Brief delay to let hide transition play
-    },
-
-    bannerShowTimeout: null,
-    bannerHideTimeout: null,
-
-    escapeHtml(text) {
-        const div = document.createElement('div');
-        div.textContent = text;
-        return div.innerHTML;
+            }, CONFIG.timing.bannerDuration);
+        });
     }
 };
 
 // =============================================================================
-// DATE TRACKER (Projects Page)
+// 6. DATE TRACKER
 // =============================================================================
-
-/**
- * Manages the date display tracking on the projects page
- */
 const DateTracker = {
     projectsGrid: null,
     projectCards: [],
     dateElements: [],
     hoveredIndex: null,
+    fadeZone: 50,
 
     init(grid, cards, dates) {
         this.projectsGrid = grid;
         this.projectCards = cards;
         this.dateElements = dates;
 
-        this.setupEventListeners();
+        cards.forEach((card, index) => {
+            card.addEventListener('mouseenter', () => this.setHovered(index));
+            card.addEventListener('mouseleave', () => this.setHovered(null));
+        });
+
+        grid.addEventListener('scroll', () => this.updatePositions());
+        window.addEventListener('resize', () => this.updatePositions());
         this.updatePositions();
     },
 
-    setupEventListeners() {
-        // Hover listeners for cards
-        this.projectCards.forEach((card, index) => {
-            card.addEventListener('mouseenter', () => this.handleHover(index));
-            card.addEventListener('mouseleave', () => this.handleHover(null));
-        });
-
-        // Update on scroll and resize
-        this.projectsGrid.addEventListener('scroll', () => this.updatePositions());
-        window.addEventListener('resize', () => this.updatePositions());
-    },
-
-    handleHover(index) {
+    setHovered(index) {
         this.hoveredIndex = index;
-        
         this.dateElements.forEach((el, i) => {
             el.classList.toggle(CONFIG.classes.highlighted, i === index);
         });
-        
         this.updatePositions();
     },
 
@@ -353,7 +492,6 @@ const DateTracker = {
         const gridPadding = 8;
         const visibleTop = gridRect.top + gridPadding;
         const visibleBottom = gridRect.bottom - gridPadding;
-        const totalProjects = this.projectCards.length;
 
         this.projectCards.forEach((card, index) => {
             const cardRect = card.getBoundingClientRect();
@@ -364,84 +502,42 @@ const DateTracker = {
             const relativeToGrid = cardCenterY - gridRect.top;
             const dateHeight = dateEl.offsetHeight;
             
-            // Position date element
             dateEl.style.top = `${gridOffset + relativeToGrid - dateHeight / 2}px`;
 
-            // Calculate visibility
             const isCenterVisible = cardCenterY >= visibleTop && cardCenterY <= visibleBottom;
-            
-            if (!isCenterVisible) {
-                dateEl.style.opacity = '0';
-            } else {
-                const opacity = this.calculateOpacity(index, cardCenterY, visibleTop, visibleBottom, totalProjects);
-                dateEl.style.opacity = opacity.toString();
-            }
+            dateEl.style.opacity = isCenterVisible 
+                ? this.calculateOpacity(index, cardCenterY, visibleTop, visibleBottom)
+                : '0';
         });
     },
 
-    calculateOpacity(index, cardCenterY, visibleTop, visibleBottom, totalProjects) {
-        const distanceToTop = cardCenterY - visibleTop;
-        const distanceToBottom = visibleBottom - cardCenterY;
-        const distanceToEdge = Math.min(distanceToTop, distanceToBottom);
-        
-        // Edge fade multiplier
-        let edgeFade = 1;
-        if (distanceToEdge < CONFIG.animation.fadeZone) {
-            edgeFade = distanceToEdge / CONFIG.animation.fadeZone;
-        }
+    calculateOpacity(index, cardCenterY, visibleTop, visibleBottom) {
+        const distanceToEdge = Math.min(cardCenterY - visibleTop, visibleBottom - cardCenterY);
+        const edgeFade = distanceToEdge < this.fadeZone ? distanceToEdge / this.fadeZone : 1;
 
-        // Base opacity based on hover state
-        let baseOpacity;
-        if (this.hoveredIndex === null) {
-            baseOpacity = 0.3;
-        } else if (index === this.hoveredIndex) {
+        let baseOpacity = 0.3;
+        if (this.hoveredIndex !== null && index === this.hoveredIndex) {
             baseOpacity = 1;
-        } else {
-            const distance = Math.abs(index - this.hoveredIndex);
-            const maxDistance = Math.max(this.hoveredIndex, totalProjects - 1 - this.hoveredIndex);
-            const fadeFactor = distance / Math.max(maxDistance, 1);
-            baseOpacity = Math.max(0.15, 0.6 - fadeFactor * 0.45);
         }
 
-        return baseOpacity * edgeFade;
+        return (baseOpacity * edgeFade).toString();
     }
 };
 
 // =============================================================================
-// SKILLS
+// 7. SKILLS
 // =============================================================================
-
-/**
- * Manage skills loading, line-based display, and animated swapping
- * 
- * Algorithm:
- * 1. Calculate the width of 4 lines based on container width
- * 2. Measure width of all skills using a hidden measurement element
- * 3. Fill each line using percentage-based algorithm:
- *    - Randomly select skills and add to line if they fit
- *    - Continue until 80% fill is reached
- *    - Once at/above 80%, keep trying until a failure occurs
- *    - Single failure at >=80% terminates fill, move to next line
- * 4. Swap every 1.5 seconds:
- *    - Select a random line and 1-3 adjacent skills
- *    - Calculate remaining line width without those skills
- *    - Find replacement skills using fill algorithm
- *    - Replace at same position with extended animation
- */
 const Skills = {
     container: null,
-    allSkills: [],           // All available skills
-    lines: [[], [], [], []],     // Skills on each of the 4 lines
-    lineContainers: [],      // DOM containers for each line
-    lineElements: [[], [], [], []], // DOM elements for each line
-    lineLocks: [false, false, false, false], // Prevent concurrent swaps on same line
-    animationInterval: null, // Store interval ID for cleanup
-    skillWidths: {},         // Cache of skill name -> pixel width
-    lineWidth: 0,            // Available width per line
-    gap: 8,                  // Gap between skills (--space-sm)
-    highlightDuration: 800,     // Duration to show highlight (same for old and new skills)
-    fadeOutDuration: 500,       // Duration for old skills to fade out (ms)
-    fadeInDuration: 600,        // Duration for new skills to fade in (ms)
+    allSkills: [],
+    lines: [[], [], [], []],
+    lineContainers: [],
+    lineElements: [[], [], [], []],
+    lineLocks: [false, false, false, false],
+    animationInterval: null,
+    skillWidths: {},
+    lineWidth: 0,
+    gap: 8,
     
     async init() {
         this.container = $(CONFIG.selectors.skillsContainer);
@@ -449,39 +545,50 @@ const Skills = {
 
         try {
             const response = await fetch('/skills.json');
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+            }
             const data = await response.json();
-            this.processSkills(data.skills);
+            
+            if (!data.skills || !Array.isArray(data.skills)) {
+                throw new Error('Invalid skills data format');
+            }
+            
+            this.allSkills = [...data.skills];
+            this.shuffleArray(this.allSkills);
             this.calculateLineWidth();
             this.measureAllSkills();
             this.fillAllLines();
             this.render();
             this.startAnimation();
             
-            // Recalculate on resize
-            window.addEventListener('resize', () => this.handleResize());
+            // Debounced resize handler
+            this._resizeHandler = debounce(() => this.handleResize(), CONFIG.timing.resizeDebounce);
+            window.addEventListener('resize', this._resizeHandler);
         } catch (error) {
             console.error('Failed to load skills:', error);
+            this.renderError();
         }
     },
-
-    processSkills(skillsArray) {
-        // Skills are now a flat array of strings
-        this.allSkills = skillsArray.map(name => ({ name }));
-        this.shuffleArray(this.allSkills);
+    
+    renderError() {
+        if (!this.container) return;
+        this.container.innerHTML = `
+            <div class="skills-line" style="justify-content: center;">
+                <div class="skill-box visible" style="color: var(--color-text-muted);">
+                    Unable to load skills
+                </div>
+            </div>
+        `;
     },
 
     calculateLineWidth() {
         const containerRect = this.container.getBoundingClientRect();
-        // Account for container padding
         this.lineWidth = containerRect.width - 32;
-        
-        // Get gap from CSS
-        const computedStyle = getComputedStyle(this.container);
-        this.gap = parseInt(computedStyle.gap) || 8;
+        this.gap = parseInt(getComputedStyle(this.container).gap) || 8;
     },
 
     measureAllSkills() {
-        // Create a hidden measurement element matching skill-box styles
         const measureEl = document.createElement('div');
         measureEl.className = 'skill-box';
         measureEl.style.cssText = 'position: absolute; visibility: hidden; white-space: nowrap;';
@@ -489,70 +596,41 @@ const Skills = {
         
         this.skillWidths = {};
         this.allSkills.forEach(skill => {
-            measureEl.textContent = skill.name;
-            // Add padding (16px on each side from --space-md)
-            this.skillWidths[skill.name] = measureEl.offsetWidth;
+            measureEl.textContent = skill;
+            this.skillWidths[skill] = measureEl.offsetWidth;
         });
         
         document.body.removeChild(measureEl);
     },
 
-    getSkillWidth(skill) {
-        return this.skillWidths[skill.name] || 100;
-    },
-
-    /**
-     * Fill a line using percentage-based algorithm
-     * Returns array of skills that fit on the line
-     * 
-     * Algorithm:
-     * - Keep selecting random skills until 80% fill is reached
-     * - Once at or above 80%, any failure (skill doesn't fit) terminates
-     * - Never exceed 100%
-     */
     fillLine(availableSkills, lineWidth) {
         const result = [];
         let currentWidth = 0;
         const used = new Set();
-        const targetPercentage = 0.8; // 80% threshold
-        
-        // Create a shuffled copy of available skills
         const shuffled = [...availableSkills];
         this.shuffleArray(shuffled);
         
         let attempts = 0;
-        const maxAttempts = shuffled.length * 3; // Prevent infinite loops
+        const maxAttempts = shuffled.length * 3;
         
         while (attempts < maxAttempts) {
-            // Randomly pick a skill from shuffled pool
-            const randomIndex = Math.floor(Math.random() * shuffled.length);
-            const skill = shuffled[randomIndex];
+            const skill = shuffled[Math.floor(Math.random() * shuffled.length)];
             
-            // Skip if already used on this line
-            if (used.has(skill.name)) {
+            if (used.has(skill)) {
                 attempts++;
                 continue;
             }
             
-            const skillWidth = this.getSkillWidth(skill);
+            const skillWidth = this.skillWidths[skill] || 100;
             const gapWidth = result.length > 0 ? this.gap : 0;
             const newWidth = currentWidth + gapWidth + skillWidth;
             
-            // Calculate current fill percentage
-            const currentPercentage = currentWidth / lineWidth;
-            
             if (newWidth <= lineWidth) {
-                // Skill fits, add to line
                 result.push(skill);
                 currentWidth = newWidth;
-                used.add(skill.name);
-            } else {
-                // Skill doesn't fit
-                if (currentPercentage >= targetPercentage) {
-                    // At or above 80% - single failure terminates
-                    break;
-                }
-                // Below 80% - keep trying other skills
+                used.add(skill);
+            } else if (currentWidth / lineWidth >= 0.8) {
+                break;
             }
             
             attempts++;
@@ -563,33 +641,24 @@ const Skills = {
 
     fillAllLines() {
         this.lines = [[], [], [], []];
-        
-        // Track all skills used across lines
-        let usedSkills = new Set();
+        const usedSkills = new Set();
         
         for (let i = 0; i < 4; i++) {
-            // Get available skills (not yet used on any line)
-            const available = this.allSkills.filter(s => !usedSkills.has(s.name));
-            
+            const available = this.allSkills.filter(s => !usedSkills.has(s));
             if (available.length === 0) break;
             
-            // Fill this line
             this.lines[i] = this.fillLine(available, this.lineWidth);
-            
-            // Mark these skills as used
-            this.lines[i].forEach(s => usedSkills.add(s.name));
+            this.lines[i].forEach(s => usedSkills.add(s));
         }
     },
 
     render() {
-        // Clear container
         this.container.innerHTML = '';
         this.lineContainers = [];
         this.lineElements = [[], [], [], []];
         
         let elementIndex = 0;
         
-        // Create separate container for each line
         for (let lineIndex = 0; lineIndex < 4; lineIndex++) {
             const lineContainer = document.createElement('div');
             lineContainer.className = 'skills-line';
@@ -597,14 +666,11 @@ const Skills = {
             this.container.appendChild(lineContainer);
             this.lineContainers.push(lineContainer);
             
-            const lineSkills = this.lines[lineIndex];
-            
-            lineSkills.forEach((skill) => {
+            this.lines[lineIndex].forEach(skill => {
                 const box = this.createSkillBox(skill, lineIndex);
                 lineContainer.appendChild(box);
                 this.lineElements[lineIndex].push(box);
                 
-                // Stagger fade-in animation
                 const idx = elementIndex++;
                 setTimeout(() => {
                     box.classList.remove('fade-in');
@@ -618,29 +684,29 @@ const Skills = {
         const box = document.createElement('div');
         box.className = 'skill-box fade-in';
         box.setAttribute('role', 'listitem');
-        box.textContent = skill.name;
-        box.dataset.skillName = skill.name;
+        box.textContent = skill;
+        box.dataset.skillName = skill;
         box.dataset.lineIndex = lineIndex;
         return box;
     },
 
     startAnimation() {
         if (prefersReducedMotion()) return;
-        
-        // Clear any existing interval
         this.stopAnimation();
-        
-        // Reset line locks
         this.lineLocks = [false, false, false, false];
+        this.animationInterval = setInterval(() => this.performSwap(), CONFIG.timing.swapInterval);
         
-        // Start swaps at regular intervals (allows overlapping animations)
-        // Animation duration ~2700ms, interval 1500ms = overlapping swaps
-        this.animationInterval = setInterval(() => this.performSwap(), 1500);
-        
-        // Set up visibility change handler (only once)
-        if (!this.visibilityHandlerBound) {
-            this.visibilityHandlerBound = true;
-            document.addEventListener('visibilitychange', () => this.handleVisibilityChange());
+        // Set up visibility handler once (using bound method for proper cleanup)
+        if (!this._visibilityHandler) {
+            this._visibilityHandler = () => {
+                if (document.hidden) {
+                    this.stopAnimation();
+                } else {
+                    this.cleanupHighlights();
+                    this.startAnimation();
+                }
+            };
+            document.addEventListener('visibilitychange', this._visibilityHandler);
         }
     },
 
@@ -651,224 +717,148 @@ const Skills = {
         }
     },
 
-    handleVisibilityChange() {
-        if (document.hidden) {
-            // Tab is hidden - stop the animation to prevent accumulating highlights
-            this.stopAnimation();
-        } else {
-            // Tab is visible again - clean up any stale highlights and restart
-            this.cleanupHighlights();
-            this.startAnimation();
-        }
-    },
-
     cleanupHighlights() {
-        // Remove all highlight and animation classes from skill boxes
-        const allSkillBoxes = this.container?.querySelectorAll('.skill-box');
-        if (allSkillBoxes) {
-            allSkillBoxes.forEach(box => {
-                box.classList.remove('highlighted', 'fading-out', 'fading-in');
-                // Ensure visible state
-                if (!box.classList.contains('visible')) {
-                    box.classList.add('visible');
-                }
-            });
-        }
-        
-        // Reset all line locks
+        this.container?.querySelectorAll('.skill-box').forEach(box => {
+            box.classList.remove('highlighted', 'fading-out', 'fading-in');
+            if (!box.classList.contains('visible')) box.classList.add('visible');
+        });
         this.lineLocks = [false, false, false, false];
     },
 
-    /**
-     * Try to find a valid swap configuration
-     * Returns swap data if successful, null if no valid swap found
-     */
-    tryFindSwap() {
-        // Select a random line (0, 1, 2, or 3)
-        const lineIndex = Math.floor(Math.random() * 4);
-        
-        // Skip if this line is already being swapped
-        if (this.lineLocks[lineIndex]) {
-            return null;
+    performSwap() {
+        // Find a valid swap
+        let swapData = null;
+        for (let attempts = 0; attempts < 5 && !swapData; attempts++) {
+            swapData = this.findSwapCandidate();
         }
-        
+        if (!swapData) return;
+
+        const { lineIndex, startIndex, endIndex, removedElements, newSkills } = swapData;
         const lineSkills = this.lines[lineIndex];
         const lineElements = this.lineElements[lineIndex];
         
-        if (lineSkills.length === 0) {
-            return null;
+        this.lineLocks[lineIndex] = true;
+
+        // Check if animations are enabled (handles both Settings not initialized and disabled state)
+        const animationsEnabled = Settings.animationsEnabled !== false;
+        
+        if (!animationsEnabled) {
+            this.executeSwap(lineIndex, lineSkills, lineElements, startIndex, endIndex, removedElements, newSkills, false);
+            return;
         }
+
+        // Animated swap
+        removedElements.forEach(el => el?.classList.add('highlighted'));
         
-        // Select 1-3 adjacent skills to swap
-        const swapCount = Math.floor(Math.random() * 3) + 1; // 1, 2, or 3
+        setTimeout(() => {
+            // Re-check if animations were disabled during the highlight phase
+            if (!Settings.animationsEnabled) {
+                this.lineLocks[lineIndex] = false;
+                return;
+            }
+            
+            removedElements.forEach(el => el?.classList.add('fading-out'));
+            
+            setTimeout(() => {
+                // Re-check if animations were disabled during the fade-out phase
+                if (!Settings.animationsEnabled) {
+                    this.lineLocks[lineIndex] = false;
+                    return;
+                }
+                
+                this.executeSwap(lineIndex, lineSkills, lineElements, startIndex, endIndex, removedElements, newSkills, true);
+            }, CONFIG.timing.fadeOutDuration);
+        }, CONFIG.timing.highlightDuration);
+    },
+
+    findSwapCandidate() {
+        const lineIndex = Math.floor(Math.random() * 4);
+        if (this.lineLocks[lineIndex]) return null;
         
-        // Select random starting position for adjacent skills
+        const lineSkills = this.lines[lineIndex];
+        if (lineSkills.length === 0) return null;
+        
+        // Select 1-3 adjacent skills
+        const swapCount = Math.floor(Math.random() * 3) + 1;
         const maxStart = Math.max(0, lineSkills.length - swapCount);
         const startIndex = Math.floor(Math.random() * (maxStart + 1));
         const endIndex = Math.min(startIndex + swapCount, lineSkills.length);
-        const actualSwapCount = endIndex - startIndex;
         
-        if (actualSwapCount === 0) {
-            return null;
-        }
+        if (endIndex === startIndex) return null;
         
-        // Get skills being removed
-        const removedSkills = lineSkills.slice(startIndex, endIndex);
-        const removedElements = lineElements.slice(startIndex, endIndex);
-        
-        // Calculate remaining line width after removal
+        // Calculate available width
+        const removedElements = this.lineElements[lineIndex].slice(startIndex, endIndex);
         let remainingWidth = 0;
         for (let i = 0; i < lineSkills.length; i++) {
             if (i < startIndex || i >= endIndex) {
-                remainingWidth += this.getSkillWidth(lineSkills[i]);
+                remainingWidth += this.skillWidths[lineSkills[i]] || 100;
             }
         }
-        // Add gaps for remaining skills
-        const remainingCount = lineSkills.length - actualSwapCount;
-        if (remainingCount > 1) {
-            remainingWidth += (remainingCount - 1) * this.gap;
-        }
+        const remainingCount = lineSkills.length - (endIndex - startIndex);
+        if (remainingCount > 1) remainingWidth += (remainingCount - 1) * this.gap;
         
-        // Calculate available width for new skills (including gap to adjacent skills)
         const hasSkillsBefore = startIndex > 0;
         const hasSkillsAfter = endIndex < lineSkills.length;
         const extraGaps = (hasSkillsBefore ? 1 : 0) + (hasSkillsAfter ? 1 : 0);
         const availableWidth = this.lineWidth - remainingWidth - (extraGaps * this.gap);
         
-        // Get all currently displayed skill names (including those being removed)
-        // Skills being removed should NOT be available as replacements
-        const displayedNames = new Set();
-        this.lines.forEach(line => line.forEach(s => displayedNames.add(s.name)));
+        // Find replacement skills
+        const displayedSkills = new Set();
+        this.lines.forEach(line => line.forEach(s => displayedSkills.add(s)));
+        const availableSkills = this.allSkills.filter(s => !displayedSkills.has(s));
         
-        // Get available skills for replacement (must not be currently displayed)
-        const availableSkills = this.allSkills.filter(s => !displayedNames.has(s.name));
+        if (availableSkills.length === 0) return null;
         
-        if (availableSkills.length === 0) {
-            return null;
-        }
-        
-        // Fill the available width using the seen-list algorithm
         const newSkills = this.fillLine(availableSkills, availableWidth);
+        if (newSkills.length === 0) return null;
         
-        if (newSkills.length === 0) {
-            return null;
-        }
-        
-        // Return all swap data
-        return {
-            lineIndex,
-            lineSkills,
-            lineElements,
-            startIndex,
-            endIndex,
-            removedSkills,
-            removedElements,
-            newSkills
-        };
+        return { lineIndex, startIndex, endIndex, removedElements, newSkills };
     },
 
-    performSwap() {
-        // Try to find a valid swap (retry up to 5 times if needed)
-        let swapData = null;
-        let attempts = 0;
-        
-        while (!swapData && attempts < 5) {
-            swapData = this.tryFindSwap();
-            attempts++;
-        }
-        
-        // If no valid swap found, skip this cycle
-        if (!swapData) {
-            return;
-        }
-        
-        const {
-            lineIndex,
-            lineSkills,
-            lineElements,
-            startIndex,
-            endIndex,
-            removedElements,
-            newSkills
-        } = swapData;
-        
-        // Lock this line to prevent concurrent swaps
-        this.lineLocks[lineIndex] = true;
-        
-        // Now that we have confirmed replacement skills, highlight old skills
-        removedElements.forEach(el => {
-            if (el) el.classList.add('highlighted');
+    executeSwap(lineIndex, lineSkills, lineElements, startIndex, endIndex, removedElements, newSkills, animated) {
+        const newElements = newSkills.map(skill => {
+            const box = this.createSkillBox(skill, lineIndex);
+            box.classList.remove('fade-in');
+            box.classList.add(animated ? 'fading-in' : 'visible');
+            return box;
         });
         
-        // After highlight duration, fade out old skills
-        setTimeout(() => {
-            removedElements.forEach(el => {
-                if (el) el.classList.add('fading-out');
+        const lineContainer = this.lineContainers[lineIndex];
+        const insertBeforeElement = removedElements[0];
+        
+        newElements.forEach(el => lineContainer.insertBefore(el, insertBeforeElement));
+        removedElements.forEach(el => el?.parentNode?.removeChild(el));
+        
+        // Update state
+        this.lines[lineIndex] = [
+            ...lineSkills.slice(0, startIndex),
+            ...newSkills,
+            ...lineSkills.slice(endIndex)
+        ];
+        
+        this.lineElements[lineIndex] = [
+            ...lineElements.slice(0, startIndex),
+            ...newElements,
+            ...lineElements.slice(endIndex)
+        ];
+        
+        this.lineElements[lineIndex].forEach(el => el.dataset.lineIndex = lineIndex);
+        
+        if (animated) {
+            requestAnimationFrame(() => {
+                newElements.forEach(el => {
+                    el?.classList.remove('fading-in');
+                    el?.classList.add('visible', 'highlighted');
+                });
             });
             
-            // After fade out completes, swap the elements
             setTimeout(() => {
-                // Create new elements (start hidden for fade-in)
-                const newElements = newSkills.map(skill => {
-                    const box = this.createSkillBox(skill, lineIndex);
-                    box.classList.remove('fade-in');
-                    box.classList.add('fading-in');
-                    return box;
-                });
-                
-                // Find insertion point in DOM (use line container, not main container)
-                const lineContainer = this.lineContainers[lineIndex];
-                const insertBeforeElement = removedElements[0];
-                
-                // Insert new elements at the same position within the line
-                newElements.forEach(el => {
-                    lineContainer.insertBefore(el, insertBeforeElement);
-                });
-                
-                // Remove old elements from DOM
-                removedElements.forEach(el => {
-                    if (el && el.parentNode) el.remove();
-                });
-                
-                // Update data structures
-                this.lines[lineIndex] = [
-                    ...lineSkills.slice(0, startIndex),
-                    ...newSkills,
-                    ...lineSkills.slice(endIndex)
-                ];
-                
-                this.lineElements[lineIndex] = [
-                    ...lineElements.slice(0, startIndex),
-                    ...newElements,
-                    ...lineElements.slice(endIndex)
-                ];
-                
-                // Update line indices in data attributes
-                this.lineElements[lineIndex].forEach(el => {
-                    el.dataset.lineIndex = lineIndex;
-                });
-                
-                // Trigger fade-in animation with highlight
-                requestAnimationFrame(() => {
-                    newElements.forEach(el => {
-                        if (el) {
-                            el.classList.remove('fading-in');
-                            el.classList.add('visible', 'highlighted');
-                        }
-                    });
-                });
-                
-                // Remove highlight after same duration as old skills
-                setTimeout(() => {
-                    newElements.forEach(el => {
-                        if (el) el.classList.remove('highlighted');
-                    });
-                    
-                    // Unlock this line for future swaps
-                    this.lineLocks[lineIndex] = false;
-                }, this.fadeInDuration + this.highlightDuration);
-            }, this.fadeOutDuration);
-        }, this.highlightDuration);
+                newElements.forEach(el => el?.classList.remove('highlighted'));
+                this.lineLocks[lineIndex] = false;
+            }, CONFIG.timing.fadeInDuration + CONFIG.timing.highlightDuration);
+        } else {
+            this.lineLocks[lineIndex] = false;
+        }
     },
 
     shuffleArray(array) {
@@ -880,53 +870,166 @@ const Skills = {
     },
 
     handleResize() {
-        // Stop animation immediately to prevent errors with stale references
         this.stopAnimation();
         
-        // Debounce resize handler
-        clearTimeout(this.resizeTimeout);
-        this.resizeTimeout = setTimeout(() => {
-            const oldWidth = this.lineWidth;
-            this.calculateLineWidth();
-            
-            // If width changed significantly, refill lines
-            if (Math.abs(this.lineWidth - oldWidth) > 50) {
-                this.measureAllSkills();
-                this.fillAllLines();
-                this.render();
-            }
-            
-            // Restart animation after resize settles
-            this.startAnimation();
-        }, 250);
-    },
-
-    resizeTimeout: null
+        const oldWidth = this.lineWidth;
+        this.calculateLineWidth();
+        
+        // Only re-render if width changed significantly
+        if (Math.abs(this.lineWidth - oldWidth) > 50) {
+            this.measureAllSkills();
+            this.fillAllLines();
+            this.render();
+        }
+        
+        this.startAnimation();
+    }
 };
 
 // =============================================================================
-// FOOTER
+// 8. INFO TOOLTIP
 // =============================================================================
+class InfoTooltipHandler extends HoverDropdown {
+    constructor() {
+        super('.info-icon', '.info-tooltip');
+    }
 
-/**
- * Initialize footer with current year
- */
+    init() {
+        super.init();
+        if (!this.dropdown) return;
+        
+        // Stop propagation on tooltip link to let native navigation work
+        const link = this.dropdown.querySelector('.info-tooltip-link');
+        if (link) {
+            link.addEventListener('click', (e) => e.stopPropagation());
+        }
+    }
+
+    onActivate() {
+        this.trigger.classList.add('active');
+    }
+
+    onDeactivate() {
+        this.trigger.classList.remove('active');
+    }
+}
+
+const InfoTooltip = new InfoTooltipHandler();
+
+// =============================================================================
+// 9. SETTINGS
+// =============================================================================
+class SettingsHandler extends HoverDropdown {
+    constructor() {
+        super('.settings-btn', '.settings-dropdown', '.settings-wrapper');
+        this.animationsEnabled = true;
+    }
+
+    init() {
+        super.init();
+        if (!this.trigger || !this.dropdown) return;
+        
+        this.animationsToggle = document.getElementById('animations-toggle');
+        
+        // Load saved preference
+        const saved = localStorage.getItem(CONFIG.storage.animationsEnabled);
+        this.animationsEnabled = saved !== 'false';
+        
+        if (this.animationsToggle) {
+            this.animationsToggle.checked = this.animationsEnabled;
+            this.animationsToggle.addEventListener('change', () => {
+                this.animationsEnabled = this.animationsToggle.checked;
+                localStorage.setItem(CONFIG.storage.animationsEnabled, this.animationsEnabled);
+                this.applyAnimationState();
+            });
+        }
+        
+        this.applyAnimationState();
+    }
+
+    onActivate() {
+        this.wrapper?.classList.add('active');
+        this.trigger.classList.add('active');
+        this.trigger.setAttribute('aria-expanded', 'true');
+    }
+
+    onDeactivate() {
+        this.wrapper?.classList.remove('active');
+        this.trigger.classList.remove('active');
+        this.trigger.setAttribute('aria-expanded', 'false');
+    }
+
+    applyAnimationState() {
+        if (this.animationsEnabled) {
+            document.body.classList.remove(CONFIG.classes.animationsDisabled);
+        } else {
+            document.body.classList.add(CONFIG.classes.animationsDisabled);
+            Skills.cleanupHighlights();
+        }
+    }
+}
+
+const Settings = new SettingsHandler();
+
+// =============================================================================
+// 10. FOOTER
+// =============================================================================
 const Footer = {
     init() {
         const yearEl = $(CONFIG.selectors.yearElement);
-        if (yearEl) {
-            yearEl.textContent = new Date().getFullYear();
+        if (yearEl) yearEl.textContent = new Date().getFullYear();
+    }
+};
+
+// =============================================================================
+// 11. GLOBAL SCROLL HANDLER
+// Allows scrolling projects list from anywhere on page when there's no main scrollbar
+// =============================================================================
+const GlobalScroll = {
+    container: null,
+    isOverContainer: false,
+
+    init() {
+        this.container = $(CONFIG.selectors.projectsPage) || $(CONFIG.selectors.projectsHome);
+        if (!this.container) return;
+
+        this.container.addEventListener('mouseenter', () => { this.isOverContainer = true; });
+        this.container.addEventListener('mouseleave', () => { this.isOverContainer = false; });
+        document.addEventListener('wheel', (e) => this._handleWheel(e), { passive: false });
+    },
+
+    _handleWheel(e) {
+        if (isTouchDevice() || !this.container) return;
+        
+        const canScroll = this.container.scrollHeight > this.container.clientHeight;
+        const pageHasScroll = document.documentElement.scrollHeight > document.documentElement.clientHeight;
+
+        // Redirect scroll to container if page doesn't scroll and cursor not over container
+        if (canScroll && !pageHasScroll && !this.isOverContainer) {
+            e.preventDefault();
+            let deltaY = e.deltaY;
+            if (e.deltaMode === 1) deltaY *= 20;
+            else if (e.deltaMode === 2) deltaY *= this.container.clientHeight;
+            this.container.scrollTop += deltaY;
         }
     }
 };
 
 // =============================================================================
-// INITIALIZATION
+// 12. INITIALIZATION
 // =============================================================================
-
 document.addEventListener('DOMContentLoaded', () => {
+    // Apply animation state early to prevent flash
+    if (localStorage.getItem(CONFIG.storage.animationsEnabled) === 'false') {
+        document.body.classList.add(CONFIG.classes.animationsDisabled);
+    }
+    
+    // Initialize all modules
     Footer.init();
     Navigation.init();
     Projects.init();
     Skills.init();
+    InfoTooltip.init();
+    Settings.init();
+    GlobalScroll.init();
 });
