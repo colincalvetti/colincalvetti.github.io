@@ -11,8 +11,7 @@
  * 6. Date Tracker
  * 7. Skills
  * 8. Info Tooltip
- * 9. Settings
- * 10. Footer
+ * 9. Footer
  * 11. Global Scroll Handler
  * 12. Initialization
  */
@@ -34,12 +33,10 @@ const CONFIG = {
     classes: {
         pageHome: 'page-home',
         pageProjects: 'page-projects',
-        highlighted: 'highlighted',
-        animationsDisabled: 'animations-disabled'
+        highlighted: 'highlighted'
     },
     storage: {
-        currentPage: 'currentPage',
-        animationsEnabled: 'animationsEnabled'
+        currentPage: 'currentPage'
     },
     // Animation timings (should match CSS variables)
     timing: {
@@ -237,10 +234,7 @@ const Navigation = {
 
     setupIndicatorAnimation(previousPage) {
         const currentPage = getCurrentPage();
-        // Check animations state from localStorage directly to avoid race condition with Settings.init()
-        const savedAnimations = localStorage.getItem(CONFIG.storage.animationsEnabled);
-        const animationsEnabled = savedAnimations !== 'false';
-        const animationsDisabled = prefersReducedMotion() || !animationsEnabled;
+        const animationsDisabled = prefersReducedMotion();
         
         if (!this.indicator || !previousPage || previousPage === currentPage || animationsDisabled) {
             return;
@@ -739,33 +733,15 @@ const Skills = {
         
         this.lineLocks[lineIndex] = true;
 
-        // Check if animations are enabled (handles both Settings not initialized and disabled state)
-        const animationsEnabled = Settings.animationsEnabled !== false;
-        
-        if (!animationsEnabled) {
-            this.executeSwap(lineIndex, lineSkills, lineElements, startIndex, endIndex, removedElements, newSkills, false);
-            return;
-        }
+        // Proceed with animated swap
 
         // Animated swap
         removedElements.forEach(el => el?.classList.add('highlighted'));
         
         setTimeout(() => {
-            // Re-check if animations were disabled during the highlight phase
-            if (!Settings.animationsEnabled) {
-                this.lineLocks[lineIndex] = false;
-                return;
-            }
-            
             removedElements.forEach(el => el?.classList.add('fading-out'));
             
             setTimeout(() => {
-                // Re-check if animations were disabled during the fade-out phase
-                if (!Settings.animationsEnabled) {
-                    this.lineLocks[lineIndex] = false;
-                    return;
-                }
-                
                 this.executeSwap(lineIndex, lineSkills, lineElements, startIndex, endIndex, removedElements, newSkills, true);
             }, CONFIG.timing.fadeOutDuration);
         }, CONFIG.timing.highlightDuration);
@@ -917,62 +893,7 @@ class InfoTooltipHandler extends HoverDropdown {
 const InfoTooltip = new InfoTooltipHandler();
 
 // =============================================================================
-// 9. SETTINGS
-// =============================================================================
-class SettingsHandler extends HoverDropdown {
-    constructor() {
-        super('.settings-btn', '.settings-dropdown', '.settings-wrapper');
-        this.animationsEnabled = true;
-    }
-
-    init() {
-        super.init();
-        if (!this.trigger || !this.dropdown) return;
-        
-        this.animationsToggle = document.getElementById('animations-toggle');
-        
-        // Load saved preference
-        const saved = localStorage.getItem(CONFIG.storage.animationsEnabled);
-        this.animationsEnabled = saved !== 'false';
-        
-        if (this.animationsToggle) {
-            this.animationsToggle.checked = this.animationsEnabled;
-            this.animationsToggle.addEventListener('change', () => {
-                this.animationsEnabled = this.animationsToggle.checked;
-                localStorage.setItem(CONFIG.storage.animationsEnabled, this.animationsEnabled);
-                this.applyAnimationState();
-            });
-        }
-        
-        this.applyAnimationState();
-    }
-
-    onActivate() {
-        this.wrapper?.classList.add('active');
-        this.trigger.classList.add('active');
-        this.trigger.setAttribute('aria-expanded', 'true');
-    }
-
-    onDeactivate() {
-        this.wrapper?.classList.remove('active');
-        this.trigger.classList.remove('active');
-        this.trigger.setAttribute('aria-expanded', 'false');
-    }
-
-    applyAnimationState() {
-        if (this.animationsEnabled) {
-            document.body.classList.remove(CONFIG.classes.animationsDisabled);
-        } else {
-            document.body.classList.add(CONFIG.classes.animationsDisabled);
-            Skills.cleanupHighlights();
-        }
-    }
-}
-
-const Settings = new SettingsHandler();
-
-// =============================================================================
-// 10. FOOTER
+// 9. FOOTER
 // =============================================================================
 const Footer = {
     init() {
@@ -982,7 +903,7 @@ const Footer = {
 };
 
 // =============================================================================
-// 11. GLOBAL SCROLL HANDLER
+// 10. GLOBAL SCROLL HANDLER
 // Allows scrolling projects list from anywhere on page when there's no main scrollbar
 // =============================================================================
 const GlobalScroll = {
@@ -1016,20 +937,14 @@ const GlobalScroll = {
 };
 
 // =============================================================================
-// 12. INITIALIZATION
+// 11. INITIALIZATION
 // =============================================================================
 document.addEventListener('DOMContentLoaded', () => {
-    // Apply animation state early to prevent flash
-    if (localStorage.getItem(CONFIG.storage.animationsEnabled) === 'false') {
-        document.body.classList.add(CONFIG.classes.animationsDisabled);
-    }
-    
     // Initialize all modules
     Footer.init();
     Navigation.init();
     Projects.init();
     Skills.init();
     InfoTooltip.init();
-    Settings.init();
     GlobalScroll.init();
 });

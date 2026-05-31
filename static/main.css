@@ -238,53 +238,7 @@ a {
     }
 }
 
-/* Animations disabled via settings toggle */
-body.animations-disabled .skill-box {
-    transition: none !important;
-}
 
-body.animations-disabled .skill-box.highlighted {
-    box-shadow: none;
-}
-
-body.animations-disabled .skill-box.fade-in,
-body.animations-disabled .skill-box.fading-in,
-body.animations-disabled .skill-box.fading-out {
-    opacity: 1 !important;
-    transform: none !important;
-}
-
-body.animations-disabled .nav-indicator {
-    transition: none !important;
-}
-
-body.animations-disabled .nav-link {
-    transition: color var(--transition-base), border-color var(--transition-base) !important;
-}
-
-body.animations-disabled .unavailable-icon {
-    animation: none !important;
-}
-
-body.animations-disabled .unavailable-banner {
-    transition: none !important;
-}
-
-/* GPU-intensive effect reductions when animations disabled */
-body.animations-disabled {
-    background-attachment: scroll;
-}
-
-body.animations-disabled .site-header {
-    backdrop-filter: none;
-    -webkit-backdrop-filter: none;
-    background: var(--color-bg-primary);
-}
-
-body.animations-disabled .unavailable-banner {
-    backdrop-filter: none;
-    -webkit-backdrop-filter: none;
-}
 
 /* =============================================================================
    4. LAYOUT COMPONENTS
@@ -353,139 +307,7 @@ body.animations-disabled .unavailable-banner {
         opacity var(--transition-base);
 }
 
-/* Settings Button & Dropdown */
 
-.settings-wrapper {
-    position: absolute;
-    right: var(--space-lg);
-    top: 50%;
-    transform: translateY(-50%);
-}
-
-.settings-btn {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 36px;
-    height: 36px;
-    border-radius: var(--radius-full);
-    background: transparent;
-    border: 1px solid transparent;
-    cursor: default;
-    transition: 
-        border-color var(--transition-base),
-        box-shadow var(--transition-base);
-}
-
-.settings-btn.active {
-    border-color: var(--color-accent);
-}
-
-.settings-icon {
-    width: 18px;
-    height: 18px;
-    color: var(--color-text-muted);
-    transition: color var(--transition-base);
-}
-
-.settings-btn.active .settings-icon {
-    color: var(--color-text-primary);
-}
-
-/* Settings Dropdown */
-.settings-dropdown {
-    position: absolute;
-    right: 0;
-    top: calc(100% + var(--space-sm));
-    min-width: 160px;
-    padding: var(--space-sm) var(--space-md);
-    background: var(--color-bg-card);
-    border: 1px solid var(--color-accent);
-    border-radius: var(--radius-md);
-    opacity: 0;
-    visibility: hidden;
-    transition: 
-        opacity var(--transition-base),
-        visibility var(--transition-base);
-    z-index: var(--z-dropdown);
-}
-
-.settings-wrapper.active .settings-dropdown {
-    opacity: 1;
-    visibility: visible;
-}
-
-.settings-option {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: var(--space-md);
-}
-
-.settings-label {
-    color: var(--color-text-primary);
-    font-size: var(--font-size-sm);
-    font-weight: var(--font-weight-medium);
-    white-space: nowrap;
-}
-
-/* Toggle Switch */
-.toggle-switch {
-    position: relative;
-    display: inline-block;
-    width: 40px;
-    height: 22px;
-    flex-shrink: 0;
-}
-
-.toggle-switch input {
-    opacity: 0;
-    width: 0;
-    height: 0;
-}
-
-.toggle-slider {
-    position: absolute;
-    cursor: pointer;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: var(--color-bg-secondary);
-    border: 1px solid var(--color-border);
-    border-radius: 22px;
-    transition: 
-        background-color var(--transition-base),
-        border-color var(--transition-base);
-}
-
-.toggle-slider::before {
-    position: absolute;
-    content: "";
-    height: 16px;
-    width: 16px;
-    left: 2px;
-    bottom: 2px;
-    background: var(--color-text-muted);
-    border-radius: var(--radius-full);
-    transition: 
-        transform var(--transition-base),
-        background-color var(--transition-base);
-}
-
-.toggle-switch input:checked + .toggle-slider {
-    border-color: var(--color-accent);
-}
-
-.toggle-switch input:checked + .toggle-slider::before {
-    transform: translateX(18px);
-    background: #fff;
-}
-
-.toggle-switch input:focus-visible + .toggle-slider {
-    outline: 2px solid var(--color-accent);
-    outline-offset: 2px;
-}
 
 
 /* Navigation Positions - Home Page */
@@ -1212,10 +1034,6 @@ body.page-projects .nav-projects { left: 50%; }
         padding: var(--space-xs) var(--space-sm);
     }
     
-    .settings-wrapper { right: var(--space-md); }
-    .settings-btn { width: 32px; height: 32px; }
-    .settings-icon { width: 16px; height: 16px; }
-    
     .projects-section,
     .skills-section { padding: var(--space-md); }
     
@@ -1241,11 +1059,6 @@ body.page-projects .nav-projects { left: 50%; }
     body.page-projects .nav-projects { left: 68%; }
     
     .nav-link { font-size: var(--font-size-xs); }
-    
-    .settings-wrapper { right: var(--space-sm); }
-    .settings-btn { width: 28px; height: 28px; }
-    .settings-icon { width: 14px; height: 14px; }
-    .settings-dropdown { min-width: 140px; padding: var(--space-xs) var(--space-sm); }
     
     .profile-section { padding: var(--space-lg) var(--space-md); }
     .profile-image { width: 120px; height: 120px; }
