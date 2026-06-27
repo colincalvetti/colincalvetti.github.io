@@ -1,0 +1,20 @@
+---
+layout: default
+title: Experience
+description: >-
+  Software engineering projects, AI/ML research, and product work by Colin Calvetti,
+  including ThoughtNode, Chrome extensions, and academic publications.
+permalink: /experience/
+body_class: page-experience
+lastmod: 2026-06-27
+scripts:
+  - scroll-hints
+---
+<div class="experience">
+    {%- capture experience_content -%}
+        {%- for item in site.data.experience %}
+            {% include experience-card.html experience=item %}
+        {%- endfor %}
+    {%- endcapture -%}
+    {% include scroll-box.html list_class="experience__list" list_attrs=' aria-labelledby="experience-heading" tabindex="0"' content=experience_content %}
+</div>

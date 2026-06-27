@@ -1,0 +1,36 @@
+title: Colin Calvetti
+description: >-
+  Artificial Intelligence at Columbia University. Experience in AI/ML and Software Engineering.
+author: Colin Calvetti
+url: https://colincalvetti.github.io
+lang: en
+favicon_version: 2
+google_site_verification: _AnLU2uv_cj1IP46TPzoF_h8tf7oS0STk5FoQFHHp4g
+
+# Profile shown in the home page sidebar.
+profile:
+  image: /assets/headshot.jpeg
+  details:
+    - icon: "📍"
+      text: New York, NY
+    - icon: "⚙️"
+      text: AI in Finance and Operations, M.S.
+    - icon: "🏢"
+      text: Columbia University
+    - icon: "⚡️"
+      text: AI/ML & Software Engineering
+
+# Contact links rendered as social icons.
+contact:
+  email: colin.calvetti@gmail.com
+  linkedin: https://www.linkedin.com/in/colincalvetti/
+  github: https://www.github.com/colincalvetti
+
+# Build settings (safe to push — no Jekyll plugins required)
+exclude:
+  - Gemfile
+  - Gemfile.lock
+  - README.md
+  - vendor
+  - .jekyll-cache
+  - .DS_Store

@@ -1,0 +1,52 @@
+{%- assign page_description = page.description | default: site.description -%}
+{%- assign profile_image = site.profile.image | absolute_url -%}
+{%- assign person_id = site.url | append: '/#person' -%}
+{%- assign website_id = site.url | append: '/#website' -%}
+{%- assign webpage_id = page.url | absolute_url | append: '#webpage' -%}
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "Person",
+      "@id": {{ person_id | jsonify }},
+      "name": {{ site.author | jsonify }},
+      "url": {{ site.url | append: '/' | jsonify }},
+      "image": {{ profile_image | jsonify }},
+      "email": {{ site.contact.email | jsonify }},
+      "jobTitle": "AI/ML & Software Engineering",
+      "worksFor": {
+        "@type": "Organization",
+        "name": "Columbia University"
+      },
+      "address": {
+        "@type": "PostalAddress",
+        "addressLocality": "New York",
+        "addressRegion": "NY",
+        "addressCountry": "US"
+      },
+      "sameAs": [
+        {{ site.contact.linkedin | jsonify }},
+        {{ site.contact.github | jsonify }}
+      ]
+    },
+    {
+      "@type": "WebSite",
+      "@id": {{ website_id | jsonify }},
+      "url": {{ site.url | append: '/' | jsonify }},
+      "name": {{ site.title | jsonify }},
+      "description": {{ site.description | jsonify }},
+      "publisher": { "@id": {{ person_id | jsonify }} }
+    },
+    {
+      "@type": "WebPage",
+      "@id": {{ webpage_id | jsonify }},
+      "url": {{ page.url | absolute_url | jsonify }},
+      "name": {{ page.title | default: site.title | jsonify }},
+      "description": {{ page_description | jsonify }},
+      "isPartOf": { "@id": {{ website_id | jsonify }} },
+      "about": { "@id": {{ person_id | jsonify }} }
+    }
+  ]
+}
+</script>

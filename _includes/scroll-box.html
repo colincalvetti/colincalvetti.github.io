@@ -1,0 +1,12 @@
+{%- comment -%}
+  Reusable scrollable list with overflow hints.
+  Parameters:
+    include.list_class  - additional class(es) for the inner list
+    include.list_attrs  - optional extra attributes on the list element
+    include.content     - HTML rendered inside the list
+{%- endcomment -%}
+<div class="scroll-box">
+    <span class="scroll-box__hint scroll-box__hint--top" aria-hidden="true">+</span>
+    <div class="{{ include.list_class }} scroll-box__list" role="list"{{ include.list_attrs }}>{{ include.content }}</div>
+    <span class="scroll-box__hint scroll-box__hint--bottom" aria-hidden="true">+</span>
+</div>

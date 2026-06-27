@@ -1,0 +1,35 @@
+{%- comment -%}
+  Renders a single experience card.
+  Parameters:
+    include.experience  - an experience entry from _data/experience.yml
+    include.compact  - true for the condensed home-page variant
+{%- endcomment -%}
+{%- assign experience = include.experience -%}
+{%- assign has_link = false -%}
+{%- if experience.link and experience.link != '' -%}{%- assign has_link = true -%}{%- endif -%}
+{%- assign card_id = experience.name | append: '-' | append: experience.date | slugify -%}
+
+{%- assign card_class = 'experience-card' -%}
+{%- if include.compact %}{%- assign card_class = card_class | append: ' experience-card--compact' %}{%- endif -%}
+{%- unless has_link %}{%- assign card_class = card_class | append: ' experience-card--nolink' %}{%- endunless -%}
+
+{%- capture card_body -%}
+<h3 class="experience-card__title" id="{{ card_id }}-title">{{ experience.name }}</h3>
+{%- if has_link -%}
+<span class="experience-card__icon" aria-hidden="true">↗</span>
+{%- endif -%}
+{%- unless include.compact -%}
+<ul class="experience-card__desc">
+    {%- for line in experience.description %}
+    <li>{{ line }}</li>
+    {%- endfor %}
+</ul>
+{%- endunless -%}
+<time class="experience-card__date" datetime="{{ experience.date }}">{{ experience.date }}</time>
+{%- endcapture -%}
+
+{%- if has_link -%}
+<a class="{{ card_class }}" href="{{ experience.link }}" target="_blank" rel="noopener noreferrer" role="listitem" aria-labelledby="{{ card_id }}-title">{{ card_body }}</a>
+{%- else -%}
+<article class="{{ card_class }}" role="listitem" aria-labelledby="{{ card_id }}-title">{{ card_body }}</article>
+{%- endif -%}
