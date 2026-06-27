@@ -1,0 +1,20 @@
+---
+layout: default
+title: Projects
+description: >-
+  Software engineering projects, AI/ML research, and product work by Colin Calvetti,
+  including ThoughtNode, Chrome extensions, and academic publications.
+permalink: /projects/
+body_class: page-projects
+lastmod: 2026-06-27
+scripts:
+  - scroll-hints
+---
+<div class="projects">
+    {%- capture projects_content -%}
+        {%- for item in site.data.projects %}
+            {% include project-card.html project=item %}
+        {%- endfor %}
+    {%- endcapture -%}
+    {% include scroll-box.html list_class="projects__list" list_attrs=' aria-labelledby="projects-heading" tabindex="0"' content=projects_content %}
+</div>

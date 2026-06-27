@@ -1,0 +1,35 @@
+{%- comment -%}
+  Renders a single project card.
+  Parameters:
+    include.project  - a project entry from _data/projects.yml
+    include.compact  - true for the condensed home-page variant
+{%- endcomment -%}
+{%- assign project = include.project -%}
+{%- assign has_link = false -%}
+{%- if project.link and project.link != '' -%}{%- assign has_link = true -%}{%- endif -%}
+{%- assign card_id = project.name | append: '-' | append: project.date | slugify -%}
+
+{%- assign card_class = 'project-card' -%}
+{%- if include.compact %}{%- assign card_class = card_class | append: ' project-card--compact' %}{%- endif -%}
+{%- unless has_link %}{%- assign card_class = card_class | append: ' project-card--nolink' %}{%- endunless -%}
+
+{%- capture card_body -%}
+<h3 class="project-card__title" id="{{ card_id }}-title">{{ project.name }}</h3>
+{%- if has_link -%}
+<span class="project-card__icon" aria-hidden="true">↗</span>
+{%- endif -%}
+{%- unless include.compact -%}
+<ul class="project-card__desc">
+    {%- for line in project.description %}
+    <li>{{ line }}</li>
+    {%- endfor %}
+</ul>
+{%- endunless -%}
+<time class="project-card__date" datetime="{{ project.date }}">{{ project.date }}</time>
+{%- endcapture -%}
+
+{%- if has_link -%}
+<a class="{{ card_class }}" href="{{ project.link }}" target="_blank" rel="noopener noreferrer" role="listitem" aria-labelledby="{{ card_id }}-title">{{ card_body }}</a>
+{%- else -%}
+<article class="{{ card_class }}" role="listitem" aria-labelledby="{{ card_id }}-title">{{ card_body }}</article>
+{%- endif -%}

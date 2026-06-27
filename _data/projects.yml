@@ -1,4 +1,4 @@
-# Experience shown on the home page (favorite: true) and the experience page (all).
+# Projects shown on the home page (favorite: true) and the projects page (all).
 # Listed newest first. Omit `link` to render an entry as non-clickable.
 
 - name: Portfolio Website
@@ -6,7 +6,7 @@
   link: https://github.com/colincalvetti/colincalvetti.github.io
   favorite: false
   description:
-    - Created a portfolio website to exhibit my experience and skills
+    - Created a portfolio website to exhibit my experience, projects, and skills
     - Developed the website with AI tools, Jekyll, JavaScript, HTML, and CSS
     - Deployed the website with Github Pages
 

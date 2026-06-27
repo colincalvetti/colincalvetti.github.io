@@ -2,7 +2,7 @@
     <nav class="navbar" aria-label="Main navigation">
         <a class="nav-link nav-name" href="{{ '/' | relative_url }}"
            {%- if page.url == '/' %} aria-current="page"{% endif %}>{{ site.title }}</a>
-        <a class="nav-link nav-experience" href="{{ '/experience/' | relative_url }}"
-           {%- if page.url contains '/experience' %} aria-current="page"{% endif %}>Experience</a>
+        <a class="nav-link nav-projects" href="{{ '/projects/' | relative_url }}"
+           {%- if page.url contains '/projects' %} aria-current="page"{% endif %}>Projects</a>
     </nav>
 </header>

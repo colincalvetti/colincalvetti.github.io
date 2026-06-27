@@ -1,5 +1,5 @@
 // Toggles the "+" overflow hints on any .scroll-box whose list can be scrolled
-// further up or down. Applies to the experience page and the home favorites list.
+// further up or down. Applies to the projects page and the home favorites list.
 (function () {
     "use strict";
 

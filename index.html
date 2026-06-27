@@ -30,17 +30,17 @@ scripts:
 
     <div class="home__content">
         <section class="favorites" aria-labelledby="favorites-heading">
-            <h2 class="visually-hidden" id="favorites-heading">Favorite experience</h2>
-            <button type="button" class="info" aria-label="More experience available" aria-describedby="favorites-tip" aria-expanded="false">
+            <h2 class="visually-hidden" id="favorites-heading">Favorite projects</h2>
+            <button type="button" class="info" aria-label="More projects available" aria-describedby="favorites-tip" aria-expanded="false">
                 <span class="info__mark" aria-hidden="true">i</span>
                 <span class="info__tip" id="favorites-tip" role="tooltip">
-                    Select <a href="{{ '/experience/' | relative_url }}">Experience</a> to learn more and view additional items
+                    Select <a href="{{ '/projects/' | relative_url }}">Projects</a> to learn more and view additional items
                 </span>
             </button>
             {%- capture favorites_content -%}
-                {%- for item in site.data.experience -%}
+                {%- for item in site.data.projects -%}
                     {%- if item.favorite -%}
-                        {% include experience-card.html experience=item compact=true %}
+                        {% include project-card.html project=item compact=true %}
                     {%- endif -%}
                 {%- endfor -%}
             {%- endcapture -%}

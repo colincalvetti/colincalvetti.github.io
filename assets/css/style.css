@@ -1,7 +1,7 @@
 /* =============================================================================
    Colin Calvetti - personal site
    Sections: 1) tokens  2) base  3) header/nav  4) layout
-             5) home  6) experience cards  7) experience page  8) error page
+             5) home  6) project cards  7) projects page  8) error page
              9) responsive  10) print
    ============================================================================= */
 
@@ -205,12 +205,12 @@ ul {
 
 /* Distinctive per-page positions for the two links */
 .page-home .nav-name { left: 15%; }
-.page-home .nav-experience { left: 65%; }
-/* Center the home tab in the gap between the page edge and the experience column */
-.page-experience .nav-name {
+.page-home .nav-projects { left: 65%; }
+/* Center the home tab in the gap between the page edge and the projects column */
+.page-projects .nav-name {
     left: calc((100% - min(var(--content-width), 100% - 2 * var(--space-lg))) / 4);
 }
-.page-experience .nav-experience { left: 50%; }
+.page-projects .nav-projects { left: 50%; }
 
 /* 4. Page layout ------------------------------------------------------------ */
 .main {
@@ -237,7 +237,7 @@ ul {
 }
 
 /* Desktop: the shell fills the viewport exactly, so inner regions
-   (favorites list, experience list) scroll internally instead of growing
+   (favorites list, projects list) scroll internally instead of growing
    the page. On smaller screens the layout stacks and the page scrolls. */
 @media (min-width: 901px) {
     body {
@@ -322,7 +322,7 @@ ul {
     min-height: 0;
 }
 
-/* Favorite experience block: info icon to the left, vertically centered
+/* Favorite projects block: info icon to the left, vertically centered
    (desktop). On mobile it moves above the list (see responsive section). */
 .favorites {
     display: flex;
@@ -495,8 +495,8 @@ ul {
     transform: scale(0.92);
 }
 
-/* 6. Experience cards ------------------------------------------------------- */
-.experience-card {
+/* 6. Project cards ------------------------------------------------------- */
+.project-card {
     position: relative;
     display: grid;
     grid-template-columns: 1fr auto;
@@ -508,7 +508,7 @@ ul {
     border-radius: var(--radius-lg);
 }
 
-.experience-card__title {
+.project-card__title {
     grid-column: 1;
     grid-row: 1;
     min-width: 0;
@@ -517,7 +517,7 @@ ul {
     overflow-wrap: break-word;
 }
 
-.experience-card__date {
+.project-card__date {
     grid-column: 2;
     grid-row: 1;
     color: var(--text-muted);
@@ -526,25 +526,25 @@ ul {
     white-space: nowrap;
 }
 
-.experience-card__desc {
+.project-card__desc {
     grid-column: 1 / -1;
     grid-row: 2;
     margin-top: 0;
     font-size: 0.875rem;
 }
 
-.experience-card__desc li {
+.project-card__desc li {
     padding-left: var(--space-md);
 }
 
-.experience-card__desc li::before {
+.project-card__desc li::before {
     content: "–";
     margin-left: calc(-1 * var(--space-md));
     margin-right: var(--space-sm);
 }
 
 /* Linked cards: ↗ in the top-right slot, shown on hover (desktop) */
-.experience-card__icon {
+.project-card__icon {
     grid-column: 2;
     grid-row: 1;
     justify-self: end;
@@ -556,31 +556,31 @@ ul {
 
 /* Desktop: accent borders, full-contrast text, date at bottom */
 @media (min-width: 901px) {
-    .experience-card {
+    .project-card {
         border-color: var(--accent);
     }
 
-    .experience-card__title,
-    .experience-card__desc {
+    .project-card__title,
+    .project-card__desc {
         color: var(--text);
     }
 
-    .experience-card__date {
+    .project-card__date {
         grid-column: 1 / -1;
         color: var(--text-muted);
     }
 
-    .experience-card--compact .experience-card__date {
+    .project-card--compact .project-card__date {
         grid-row: 2;
     }
 
-    .experience-card:not(.experience-card--compact) .experience-card__date {
+    .project-card:not(.project-card--compact) .project-card__date {
         grid-row: 3;
     }
 }
 
 @media (hover: hover) and (min-width: 901px) {
-    .experience-card:hover .experience-card__icon {
+    .project-card:hover .project-card__icon {
         opacity: 1;
     }
 }
@@ -632,8 +632,8 @@ ul {
     opacity: 1;
 }
 
-/* 7. Experience page ------------------------------------------------------ */
-.experience {
+/* 7. Projects page ------------------------------------------------------ */
+.projects {
     flex: 1;
     display: flex;
     flex-direction: column;
@@ -645,11 +645,11 @@ ul {
 
 /* Full-width scroller so the wheel scrolls the list from anywhere in the
    content area (not just over the centered column). */
-.experience .scroll-box {
+.projects .scroll-box {
     width: 100%;
 }
 
-.experience__list {
+.projects__list {
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -657,7 +657,7 @@ ul {
     max-height: calc(100vh - var(--nav-height) - var(--footer-height) - 2 * var(--space-lg));
 }
 
-.experience__list > .experience-card {
+.projects__list > .project-card {
     width: 100%;
     max-width: var(--content-width);
 }
@@ -704,9 +704,9 @@ ul {
 /* 9. Responsive ------------------------------------------------------------- */
 @media (max-width: 900px) {
     .page-home .nav-name,
-    .page-experience .nav-name { left: 30%; }
-    .page-home .nav-experience,
-    .page-experience .nav-experience { left: 70%; }
+    .page-projects .nav-name { left: 30%; }
+    .page-home .nav-projects,
+    .page-projects .nav-projects { left: 70%; }
 
     .home {
         flex-direction: column;
@@ -770,7 +770,7 @@ ul {
         border-color: var(--accent);
     }
 
-    /* Experience lists expand to fit all cards; the page scrolls, not the list */
+    /* Project lists expand to fit all cards; the page scrolls, not the list */
     .scroll-box__list {
         max-height: none;
         overflow: visible;
@@ -780,40 +780,40 @@ ul {
         display: none;
     }
 
-    /* Experience cards: plain text, static borders, link icon visible, date at bottom */
-    .experience-card:not(.experience-card--compact) .experience-card__title,
-    .experience-card:not(.experience-card--compact) .experience-card__desc {
+    /* Project cards: plain text, static borders, link icon visible, date at bottom */
+    .project-card:not(.project-card--compact) .project-card__title,
+    .project-card:not(.project-card--compact) .project-card__desc {
         color: var(--text);
     }
 
-    .experience-card--compact .experience-card__title {
+    .project-card--compact .project-card__title {
         color: var(--text);
     }
 
-    .experience-card__date {
+    .project-card__date {
         grid-column: 1 / -1;
         color: var(--text-muted);
         opacity: 1;
     }
 
-    .experience-card--compact .experience-card__date {
+    .project-card--compact .project-card__date {
         grid-row: 2;
     }
 
-    .experience-card:not(.experience-card--compact) .experience-card__date {
+    .project-card:not(.project-card--compact) .project-card__date {
         grid-row: 3;
     }
 
-    .experience-card:not(.experience-card--compact) .experience-card__desc {
+    .project-card:not(.project-card--compact) .project-card__desc {
         grid-row: 2;
     }
 
-    .experience-card:not(.experience-card--nolink) .experience-card__icon {
+    .project-card:not(.project-card--nolink) .project-card__icon {
         opacity: 1;
     }
 
-    .experience-card,
-    .experience-card:hover {
+    .project-card,
+    .project-card:hover {
         border-color: var(--accent);
     }
 
@@ -839,7 +839,7 @@ ul {
 
     .favorites,
     .skills,
-    .experience {
+    .projects {
         padding: var(--space-md);
     }
 }
@@ -865,7 +865,7 @@ ul {
 @media print {
     .site-header,
     .site-footer,
-    .experience-card__icon {
+    .project-card__icon {
         display: none !important;
     }
 
@@ -878,7 +878,7 @@ ul {
         margin-top: 0;
     }
 
-    .experience-card {
+    .project-card {
         break-inside: avoid;
         border-color: #ddd;
     }

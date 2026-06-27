@@ -8,19 +8,19 @@ Content is rendered at build time from data files; JavaScript adds progressive e
 ```
 _config.yml          Site metadata, profile, and contact links
 _data/
-  experience.yml     Experience (favorite: true also appears on the home page)
+  projects.yml       Projects (favorite: true also appears on the home page)
   skills.yml         Skill chips
 _layouts/default.html
-_includes/            head, header, footer, experience-card, scroll-box, social-links
+_includes/            head, header, footer, project-card, scroll-box, social-links
 index.html           Home page
-experience.html      Experience page (/experience/)
+projects.html        Projects page (/projects/)
 404.html
 assets/              Stylesheet, scripts, favicon, headshot
 ```
 
 ## Editing content
 
-- **Experience / skills:** edit `_data/experience.yml` and `_data/skills.yml`.
+- **Projects / skills:** edit `_data/projects.yml` and `_data/skills.yml`.
 - **Profile, social links, metadata:** edit `_config.yml`.
 
 No templates need to change to add or update entries.
