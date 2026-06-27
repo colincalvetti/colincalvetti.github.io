@@ -31,10 +31,7 @@
 {%- endif %}
 
 {%- assign favicon_v = site.favicon_version -%}
-<link rel="icon" href="{{ '/favicon.ico' | relative_url }}?v={{ favicon_v }}" sizes="48x48">
-<link rel="icon" type="image/png" href="{{ '/assets/favicon-32.png' | relative_url }}?v={{ favicon_v }}" sizes="32x32">
-<link rel="icon" type="image/svg+xml" href="{{ '/assets/favicon.svg' | relative_url }}?v={{ favicon_v }}">
-<link rel="apple-touch-icon" href="{{ '/apple-touch-icon.png' | relative_url }}?v={{ favicon_v }}">
+<link rel="icon" type="image/svg+xml" href="{{ '/assets/favicon.svg' | relative_url }}?v={{ favicon_v }}" sizes="any">
 
 <link rel="stylesheet" href="{{ '/assets/css/fonts.css' | relative_url }}">
 <link rel="stylesheet" href="{{ '/assets/css/style.css' | relative_url }}">
