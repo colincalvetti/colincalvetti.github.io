@@ -30,14 +30,18 @@
         {{ site.contact.github | jsonify }}
       ]
     },
+{%- if page.url == '/' %}
     {
       "@type": "WebSite",
       "@id": {{ website_id | jsonify }},
       "url": {{ site.url | append: '/' | jsonify }},
       "name": {{ site.title | jsonify }},
+      "alternateName": ["colincalvetti.github.io"],
       "description": {{ site.description | jsonify }},
-      "publisher": { "@id": {{ person_id | jsonify }} }
+      "publisher": { "@id": {{ person_id | jsonify }} },
+      "inLanguage": {{ site.lang | default: 'en' | jsonify }}
     },
+{%- endif %}
     {
       "@type": "WebPage",
       "@id": {{ webpage_id | jsonify }},

@@ -15,21 +15,32 @@
   link: https://github.com/colincalvetti/chatgpt_sys_prompts_chrome_extension/tree/featureupdate
   favorite: true
   description:
-    - Added features to an existing chrome extension that optimizes ChatGPT workflows
-    - Features include prompt injection, context management, and prompt organization
+    - Extended a Manifest V3 Chrome extension that loads custom prompts from a user Google Doc
+    - Added multi-prompt and category support for improved UI/UX, plus cross-tab context transfer and chat naming
+    - Automated ChatGPT’s DOM via a background service worker and content-script UI
 
 - name: ThoughtNode
   date: June 2025 - August 2025
   link: https://github.com/CustomerNode/ThoughtNode
   favorite: true
   description:
-    - Created ThoughtNode, an AI enhanced email digest system that keeps businesses up to date on market trends and users informed on their interests
-    - ThoughtNode web-scrapes and crawls to find information related to custom user topics. Next, it uses an AI API to summarize data and extract insights. Finally, this information is emailed to users periodically
+    - Architected ThoughtNode, an open-source Django platform that generates scheduled, AI-summarized digests from real-time web data
+    - Built an async, distributed Playwright and Redis crawler with worker-pool deduplication, distributed locking, robots.txt compliance, and data extraction
+    - Scaffolded GPT summarization and SendGrid email delivery in a Celery task chain, with OpenAI and SendGrid integration points wired in
 
 - name: LLM Chain of Thought Reasoning Paper
   date: September 2024 - December 2024
   link: https://drive.google.com/file/d/1pjjCkzautfjNQyQ0CnutVbVhPhpNsbYK/
   favorite: true
   description:
-    - Co-Authored unpublished Chain-of-Thought Reasoning paper with Columbia University peers, Shayan Chowdhury and Priscilla Zhu
-    - Fine-tuned Meta's Llama-3.1-8B with questions from the AGIEval Math dataset, and used Google's Gemini 1.5 Pro as an evaluator
+    - Fine-tuned Meta’s LLaMA 3.1 8B with Direct Preference Optimization to improve chain-of-thought reasoning, using Gemini 1.5 Pro to grade AGIEval MATH preference pairs
+    - Built the generation and inference pipeline with unsloth and LoRA for memory-efficient training, achieving a 2x inference speedup
+    - Co-authored the paper and presented findings showing a 2-point zero-shot accuracy gain over baseline
+
+- name: Palm-Vein Biometrics Payment System
+  date: January 2024 - April 2024
+  favorite: false
+  description:
+    - Investigated palm-vein biometric authentication for payment systems as a Research Assistant advised by Professor Salvatore Stolfo, in partnership with a payment network company
+    - Reviewed academic literature on vascular biometrics to inform the project’s research direction
+    - Labeled and prepared training datasets used to build the authenticator model
