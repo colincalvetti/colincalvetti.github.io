@@ -1,9 +1,10 @@
 # Projects shown on the home page (favorite: true) and the projects page (all).
 # Listed newest first. Omit `link` to render an entry as non-clickable.
+# Use `links:` with an array of URLs to open multiple tabs when the card is clicked.
 
 - name: Portfolio Website
   date: December 2025
-  link: https://github.com/colincalvetti/colincalvetti.github.io
+  url: https://github.com/colincalvetti/colincalvetti.github.io
   favorite: false
   description:
     - Created a portfolio website to exhibit my experience, projects, and skills
@@ -12,7 +13,7 @@
 
 - name: Chrome Extension for ChatGPT Workflow Optimization
   date: October 2025
-  link: https://github.com/colincalvetti/chatgpt_sys_prompts_chrome_extension/tree/featureupdate
+  url: https://github.com/colincalvetti/chatgpt_sys_prompts_chrome_extension/tree/featureupdate
   favorite: true
   description:
     - Extended a Manifest V3 Chrome extension that loads custom prompts from a user Google Doc
@@ -21,7 +22,7 @@
 
 - name: ThoughtNode
   date: June 2025 - August 2025
-  link: https://github.com/CustomerNode/ThoughtNode
+  url: https://github.com/CustomerNode/ThoughtNode
   favorite: true
   description:
     - Architected ThoughtNode, an open-source Django platform that generates scheduled, AI-summarized digests from real-time web data
@@ -30,7 +31,11 @@
 
 - name: LLM Chain of Thought Reasoning Paper
   date: September 2024 - December 2024
-  link: https://drive.google.com/file/d/1pjjCkzautfjNQyQ0CnutVbVhPhpNsbYK/
+  urls:
+    - name: Paper
+      url: https://drive.google.com/file/d/1pjjCkzautfjNQyQ0CnutVbVhPhpNsbYK/
+    - name: Source Code
+      url: https://drive.google.com/file/d/1uI20mr-EU5ECppxivMTQOQ_Oll3-1amc/
   favorite: true
   description:
     - Fine-tuned Meta’s LLaMA 3.1 8B with Direct Preference Optimization to improve chain-of-thought reasoning, using Gemini 1.5 Pro to grade AGIEval MATH preference pairs

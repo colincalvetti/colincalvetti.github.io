@@ -6,16 +6,36 @@
 {%- endcomment -%}
 {%- assign project = include.project -%}
 {%- assign has_link = false -%}
-{%- if project.link and project.link != '' -%}{%- assign has_link = true -%}{%- endif -%}
+{%- assign use_multi_links = false -%}
+{%- assign single_link = '' -%}
+{%- assign project_links = nil -%}
+{%- if project.urls and project.urls.size > 0 -%}
+  {%- assign has_link = true -%}
+  {%- assign use_multi_links = true -%}
+  {%- assign project_links = project.urls -%}
+{%- elsif project.links and project.links.size > 0 -%}
+  {%- assign has_link = true -%}
+  {%- assign use_multi_links = true -%}
+  {%- assign project_links = project.links -%}
+{%- elsif project.url and project.url != '' -%}
+  {%- assign has_link = true -%}
+  {%- assign single_link = project.url -%}
+{%- elsif project.link and project.link != '' -%}
+  {%- assign has_link = true -%}
+  {%- assign single_link = project.link -%}
+{%- endif -%}
 {%- assign card_id = project.name | append: '-' | append: project.date | slugify -%}
 
 {%- assign card_class = 'project-card' -%}
+{%- assign show_card_icon = false -%}
 {%- if include.compact %}{%- assign card_class = card_class | append: ' project-card--compact' %}{%- endif -%}
 {%- unless has_link %}{%- assign card_class = card_class | append: ' project-card--nolink' %}{%- endunless -%}
+{%- if use_multi_links %}{%- assign card_class = card_class | append: ' project-card--multilink' %}{%- endif -%}
+{%- if has_link and use_multi_links == false %}{%- assign show_card_icon = true -%}{%- endif -%}
 
 {%- capture card_body -%}
 <h3 class="project-card__title" id="{{ card_id }}-title">{{ project.name }}</h3>
-{%- if has_link -%}
+{%- if show_card_icon -%}
 <span class="project-card__icon" aria-hidden="true">↗</span>
 {%- endif -%}
 {%- unless include.compact -%}
@@ -29,7 +49,28 @@
 {%- endcapture -%}
 
 {%- if has_link -%}
-<a class="{{ card_class }}" href="{{ project.link }}" target="_blank" rel="noopener noreferrer" role="listitem" aria-labelledby="{{ card_id }}-title">{{ card_body }}</a>
+  {%- if use_multi_links -%}
+    <div class="{{ card_class }}" role="listitem" aria-labelledby="{{ card_id }}-title">
+      {{ card_body }}
+      <div class="project-card__links" aria-label="Project links">
+        {%- for link in project_links %}
+          {%- assign link_label = link -%}
+          {%- assign link_href = link -%}
+          {%- if link.name and link.name != '' -%}
+            {%- assign link_label = link.name -%}
+          {%- endif -%}
+          {%- if link.url and link.url != '' -%}
+            {%- assign link_href = link.url -%}
+          {%- elsif link.href and link.href != '' -%}
+            {%- assign link_href = link.href -%}
+          {%- endif -%}
+        <a class="project-card__link" href="{{ link_href }}" target="_blank" rel="noopener noreferrer">{{ link_label }}</a>
+        {%- endfor %}
+      </div>
+    </div>
+  {%- else -%}
+    <a class="{{ card_class }}" href="{{ single_link }}" target="_blank" rel="noopener noreferrer" role="listitem" aria-labelledby="{{ card_id }}-title">{{ card_body }}</a>
+  {%- endif -%}
 {%- else -%}
 <article class="{{ card_class }}" role="listitem" aria-labelledby="{{ card_id }}-title">{{ card_body }}</article>
 {%- endif -%}

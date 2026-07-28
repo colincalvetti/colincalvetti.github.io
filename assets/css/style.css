@@ -554,6 +554,49 @@ ul {
     transition: opacity var(--transition);
 }
 
+.project-card__links {
+    position: absolute;
+    top: var(--space-md);
+    right: var(--space-lg);
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-sm);
+    opacity: 0;
+    pointer-events: none;
+    transform: translateY(-2px);
+    transition: opacity var(--transition), transform var(--transition);
+}
+
+.project-card:hover .project-card__links,
+.project-card:focus-within .project-card__links {
+    opacity: 1;
+    pointer-events: auto;
+    transform: translateY(0);
+}
+
+.project-card__link {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.2rem 0.55rem;
+    border: 1px solid var(--text-muted);
+    border-radius: 6px;
+    color: var(--text-muted);
+    background: transparent;
+    font-size: 0.75rem;
+    font-weight: 500;
+    letter-spacing: -0.01em;
+    line-height: 1.3;
+    text-decoration: none;
+    transition: color var(--transition), border-color var(--transition);
+}
+
+.project-card__link:hover,
+.project-card__link:focus-visible {
+    color: var(--text);
+    border-color: var(--accent);
+    text-decoration: none;
+}
+
 /* Desktop: accent borders, full-contrast text, date at bottom */
 @media (min-width: 901px) {
     .project-card {
