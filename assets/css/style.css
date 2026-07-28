@@ -855,6 +855,28 @@ ul {
         opacity: 1;
     }
 
+    /* Multilink buttons: top-right, inline with title (no hover needed) */
+    .project-card__links,
+    .project-card:hover .project-card__links,
+    .project-card:focus-within .project-card__links {
+        position: static;
+        grid-column: 2;
+        grid-row: 1;
+        justify-self: end;
+        align-self: baseline;
+        max-width: 100%;
+        justify-content: flex-end;
+        opacity: 1;
+        pointer-events: auto;
+        transform: none;
+    }
+
+    .project-card__link,
+    .project-card__link:hover {
+        color: var(--text);
+        border-color: var(--accent);
+    }
+
     .project-card,
     .project-card:hover {
         border-color: var(--accent);
